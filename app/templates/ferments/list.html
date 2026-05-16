@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}ferments — ferm{% endblock %}
+
+{% block head %}
+<style>
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .page-title {
+    font-family: Georgia, serif;
+    font-size: 20px;
+    font-style: italic;
+    color: #c8a96e;
+  }
+  .page-sub { font-size: 11px; color: #3a3830; margin-top: 2px; }
+
+  .btn {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+    font-family: inherit;
+    border: none;
+  }
+  .btn-primary { background: #c8a96e; color: #111210; font-weight: 600; }
+  .btn-primary:hover { background: #d4b97e; }
+
+  /* Filters */
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-input, .filter-select {
+    background: #151412;
+    border: 0.5px solid #252421;
+    border-radius: 4px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-family: inherit;
+    color: #e8e3d8;
+    outline: none;
+  }
+  .filter-input { min-width: 200px; }
+  .filter-input:focus, .filter-select:focus { border-color: #c8a96e55; }
+  .filter-select option { background: #151412; }
+  .btn-filter {
+    background: #1a1916;
+    color: #6b6860;
+    border: 0.5px solid #252421;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-filter:hover { color: #c8a96e; }
+
+  /* Table */
+  .ferment-table { width: 100%; border-collapse: collapse; }
+  .ferment-table th {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #3a3830;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 0.5px solid #1e1d1b;
+    font-weight: 400;
+  }
+  .ferment-table td {
+    padding: 10px 12px;
+    border-bottom: 0.5px solid #1a1916;
+    font-size: 12px;
+    vertical-align: middle;
+  }
+  .ferment-table tr:hover td { background: #151412; }
+  .ferment-table tr:last-child td { border-bottom: none; }
+
+  .td-name {
+    font-family: Georgia, serif;
+    font-style: italic;
+    color: #d8d3c8;
+    font-size: 13px;
+  }
+  .td-name a { text-decoration: none; color: inherit; }
+  .td-name a:hover { color: #c8a96e; }
+  .td-meta { font-size: 10px; color: #3a3830; margin-top: 2px; }
+
+  .badge {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .badge-status-active  { background: #0a1e10; color: #4db88a; border: 0.5px solid #143020; }
+  .badge-status-stasis  { background: #2a1a00; color: #c8a96e; border: 0.5px solid #3a2800; }
+  .badge-status-ready   { background: #1e2a0a; color: #a0c840; border: 0.5px solid #2a3810; }
+  .badge-status-failed  { background: #2a0a0a; color: #e85858; border: 0.5px solid #3a1010; }
+  .badge-status-stopped { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
+  .badge-status-default { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
+  .badge-cat { background: #1a1a30; color: #8888c8; border: 0.5px solid #2a2a48; }
+  .badge-ongoing { background: #1a2a1a; color: #5a8a5a; border: 0.5px solid #243824; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: #3a3830;
+  }
+  .empty-state-title { font-family: Georgia, serif; font-size: 16px; font-style: italic; margin-bottom: 8px; }
+  .empty-state-sub { font-size: 11px; margin-bottom: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">ferments</div>
+      <div class="page-sub">{{ ferments | length }} shown</div>
+    </div>
+    <a href="/ferments/new" class="btn btn-primary">+ new ferment</a>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" action="/ferments" class="filters">
+    <input
+      type="text"
+      name="q"
+      class="filter-input"
+      placeholder="search by name..."
+      value="{{ filters.q }}"
+    />
+    <select name="category_id" class="filter-select">
+      <option value="">all categories</option>
+      {% for cat in categories %}
+        <option value="{{ cat.id }}" {% if filters.category_id == cat.id %}selected{% endif %}>
+          {{ cat.name }}
+        </option>
+      {% endfor %}
+    </select>
+    <select name="status_id" class="filter-select">
+      <option value="">all statuses</option>
+      {% for st in statuses %}
+        <option value="{{ st.id }}" {% if filters.status_id == st.id %}selected{% endif %}>
+          {{ st.name }}
+        </option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-filter">filter</button>
+    {% if filters.q or filters.category_id or filters.status_id %}
+      <a href="/ferments" class="btn-filter">clear</a>
+    {% endif %}
+  </form>
+
+  {% if ferments %}
+  <table class="ferment-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Status</th>
+        <th>Batches</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in ferments %}
+      <tr>
+        <td>
+          <div class="td-name">
+            <a href="/ferments/{{ f.id }}">{{ f.name }}</a>
+            {% if f.is_ongoing %}
+              <span class="badge badge-ongoing" style="margin-left:6px;">ongoing</span>
+            {% endif %}
+          </div>
+          {% if f.description %}
+            <div class="td-meta">{{ f.description | truncate(60) }}</div>
+          {% endif %}
+        </td>
+        <td>
+          {% if f.category %}
+            <span class="badge badge-cat">{{ f.category.name }}</span>
+          {% else %}
+            <span style="color:#2a2a28; font-size:11px;">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if f.status %}
+            <span class="badge badge-status-{{ f.status.name | lower | replace(' ', '-') }}">
+              {{ f.status.name }}
+            </span>
+          {% else %}
+            <span style="color:#2a2a28; font-size:11px;">—</span>
+          {% endif %}
+        </td>
+        <td style="color:#5a5850; font-size:12px;">{{ f.batches | length }}</td>
+        <td style="color:#3a3830; font-size:11px;">{{ f.created_at.strftime("%d %b %Y") }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-title">no ferments found.</div>
+    <div class="empty-state-sub">
+      {% if filters.q or filters.category_id or filters.status_id %}
+        try adjusting your filters.
+      {% else %}
+        start tracking your first fermentation project.
+      {% endif %}
+    </div>
+    {% if not (filters.q or filters.category_id or filters.status_id) %}
+      <a href="/ferments/new" class="btn btn-primary">+ new ferment</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

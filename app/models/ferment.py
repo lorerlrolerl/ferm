@@ -12,12 +12,6 @@ from app.database import Base
 # ── Ferment ────────────────────────────────────────────────────────────────
 
 class Ferment(Base):
-    """
-    Top-level project. Can be:
-    - ongoing (sourdough starter, SCOBY hotel) — is_ongoing=True
-    - one-shot (a specific batch of sauerkraut) — is_ongoing=False
-    Contains one or more Batches over its lifetime.
-    """
     __tablename__ = "ferments"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -31,7 +25,6 @@ class Ferment(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
     archived_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
-    # Relationships
     category: Mapped["Category"] = relationship(back_populates="ferments")
     status: Mapped["Status"] = relationship()
     created_by_user: Mapped["User"] = relationship(back_populates="created_ferments")
@@ -48,17 +41,15 @@ class Ferment(Base):
 # ── Batch ──────────────────────────────────────────────────────────────────
 
 class Batch(Base):
-    """
-    A production run within a Ferment.
-    - stage: 1, 2, 3... (e.g. Kombucha F1, F2)
-    - parent_batch_id: points to the batch this was started from (F2 → F1)
-    - target_ph: optional readiness trigger; human still confirms via status
-    """
     __tablename__ = "batches"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     ferment_id: Mapped[int] = mapped_column(ForeignKey("ferments.id"), nullable=False)
-    name: Mapped[str | None] = mapped_column(String(128), nullable=True)  # optional label
+    name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    batch_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # Sequential per ferment: batch 1, 2, 3... regardless of stage
+    lot_code: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True, index=True)
+    # e.g. HSKR-LAB-250516-S1-B1 — auto-suggested, editable
     stage: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     parent_batch_id: Mapped[int | None] = mapped_column(ForeignKey("batches.id"), nullable=True)
     status_id: Mapped[int | None] = mapped_column(ForeignKey("statuses.id"), nullable=True)
@@ -71,7 +62,6 @@ class Batch(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
-    # Relationships
     ferment: Mapped["Ferment"] = relationship(back_populates="batches")
     status: Mapped["Status"] = relationship()
     created_by_user: Mapped["User"] = relationship(back_populates="created_batches")
@@ -90,14 +80,12 @@ class Batch(Base):
     )
 
     def __repr__(self) -> str:
-        label = self.name or f"Stage {self.stage}"
-        return f"<Batch {label} (ferment_id={self.ferment_id})>"
+        return f"<Batch {self.lot_code or f'B{self.batch_number}'} (ferment_id={self.ferment_id})>"
 
 
 # ── Batch join tables ──────────────────────────────────────────────────────
 
 class BatchIngredient(Base):
-    """Ingredient + quantity used in a specific batch."""
     __tablename__ = "batch_ingredients"
     __table_args__ = (UniqueConstraint("batch_id", "ingredient_id"),)
 
@@ -105,7 +93,7 @@ class BatchIngredient(Base):
     batch_id: Mapped[int] = mapped_column(ForeignKey("batches.id"), nullable=False)
     ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredients.id"), nullable=False)
     quantity: Mapped[float | None] = mapped_column(Float, nullable=True)
-    unit: Mapped[str | None] = mapped_column(String(32), nullable=True)  # g, kg, ml, l, piece, ...
+    unit: Mapped[str | None] = mapped_column(String(32), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     batch: Mapped["Batch"] = relationship(back_populates="ingredients")
@@ -113,7 +101,6 @@ class BatchIngredient(Base):
 
 
 class BatchAdditive(Base):
-    """Additive + quantity used in a specific batch."""
     __tablename__ = "batch_additives"
     __table_args__ = (UniqueConstraint("batch_id", "additive_id"),)
 
@@ -131,20 +118,15 @@ class BatchAdditive(Base):
 # ── Container ──────────────────────────────────────────────────────────────
 
 class Container(Base):
-    """
-    A physical vessel that holds part or all of a batch.
-    A 1000g sauerkraut batch split into 3 jars = 3 containers under the same batch.
-    Has its own status and can have its own schedule (e.g. burping schedule in F2).
-    """
     __tablename__ = "containers"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     batch_id: Mapped[int] = mapped_column(ForeignKey("batches.id"), nullable=False)
-    name: Mapped[str] = mapped_column(String(128), nullable=False)  # e.g. "Jar A", "Crock 1"
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
     vessel_type_id: Mapped[int | None] = mapped_column(ForeignKey("vessel_types.id"), nullable=True)
     vessel_material_id: Mapped[int | None] = mapped_column(ForeignKey("vessel_materials.id"), nullable=True)
     capacity: Mapped[float | None] = mapped_column(Float, nullable=True)
-    capacity_unit: Mapped[str | None] = mapped_column(String(16), nullable=True)  # ml, l, g, kg
+    capacity_unit: Mapped[str | None] = mapped_column(String(16), nullable=True)
     fill_weight: Mapped[float | None] = mapped_column(Float, nullable=True)
     fill_unit: Mapped[str | None] = mapped_column(String(16), nullable=True)
     status_id: Mapped[int | None] = mapped_column(ForeignKey("statuses.id"), nullable=True)
@@ -152,7 +134,6 @@ class Container(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
-    # Relationships
     batch: Mapped["Batch"] = relationship(back_populates="containers")
     vessel_type: Mapped["VesselType"] = relationship(back_populates="containers")
     vessel_material: Mapped["VesselMaterial"] = relationship(back_populates="containers")

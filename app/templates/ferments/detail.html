@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}{{ ferment.name }} — ferm{% endblock %}
+
+{% block head %}
+<style>
+  .detail-wrap { max-width: 1000px; margin: 0 auto; }
+
+  .ferment-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 24px; gap: 16px;
+  }
+  .ferment-title {
+    font-family: Georgia, serif; font-size: 24px;
+    font-style: italic; color: #d8d3c8; margin-bottom: 6px;
+  }
+  .ferment-meta { font-size: 11px; color: #3a3830; margin-bottom: 8px; }
+  .ferment-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  .badge {
+    font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 3px; font-weight: 500;
+  }
+  .badge-status-active  { background: #0a1e10; color: #4db88a; border: 0.5px solid #143020; }
+  .badge-status-stasis  { background: #2a1a00; color: #c8a96e; border: 0.5px solid #3a2800; }
+  .badge-status-ready   { background: #1e2a0a; color: #a0c840; border: 0.5px solid #2a3810; }
+  .badge-status-failed  { background: #2a0a0a; color: #e85858; border: 0.5px solid #3a1010; }
+  .badge-status-stopped { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
+  .badge-status-default { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
+  .badge-cat    { background: #1a1a30; color: #8888c8; border: 0.5px solid #2a2a48; }
+  .badge-ongoing{ background: #1a2a1a; color: #5a8a5a; border: 0.5px solid #243824; }
+
+  .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .btn {
+    display: inline-block; font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 7px 14px; border-radius: 4px;
+    cursor: pointer; transition: background 0.15s; text-decoration: none;
+    font-family: inherit; border: none;
+  }
+  .btn-ghost { background: transparent; color: #4a4840; border: 0.5px solid #252421; }
+  .btn-ghost:hover { color: #e8e3d8; border-color: #3a3830; }
+  .btn-primary { background: #c8a96e; color: #111210; font-weight: 600; }
+  .btn-primary:hover { background: #d4b97e; }
+
+  .ferment-description {
+    font-size: 12px; color: #5a5850; margin-bottom: 24px;
+    line-height: 1.6; max-width: 600px;
+  }
+
+  .section-label {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #4a4840; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 0.5px; background: #1e1d1b; }
+
+  .batch-list { display: flex; flex-direction: column; gap: 8px; }
+  .batch-card { background: #151412; border: 0.5px solid #252421; border-radius: 6px; overflow: hidden; }
+
+  .batch-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 0.5px solid #1a1916; gap: 12px;
+  }
+  .batch-header-left { display: flex; align-items: center; gap: 12px; }
+
+  /* Lot code — the hero element */
+  .lot-code {
+    font-family: 'DM Mono', 'Courier New', monospace;
+    font-size: 13px;
+    color: #c8a96e;
+    letter-spacing: 0.06em;
+    background: #1a1200;
+    border: 0.5px solid #3a2800;
+    border-radius: 3px;
+    padding: 3px 10px;
+  }
+  .batch-num {
+    font-size: 10px; color: #3a3830;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .batch-title {
+    font-family: Georgia, serif; font-size: 14px;
+    color: #c8c3b8; font-style: italic;
+  }
+
+  .batch-body { padding: 14px 16px; }
+  .batch-meta-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px; margin-bottom: 12px;
+  }
+  .meta-label { font-size: 9px; color: #3a3830; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 3px; }
+  .meta-value { font-size: 12px; color: #9a9488; }
+  .meta-value.highlight { color: #c8a96e; }
+  .meta-value.age { font-family: Georgia, serif; font-size: 18px; color: #4a4840; font-weight: 700; }
+
+  .batch-notes {
+    font-size: 11px; color: #4a4840; line-height: 1.6;
+    padding-top: 10px; border-top: 0.5px solid #1a1916; font-style: italic;
+  }
+
+  .containers-wrap { margin-top: 10px; }
+  .container-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .container-chip {
+    background: #0e0e0c; border: 0.5px solid #252421;
+    border-radius: 4px; padding: 5px 10px; font-size: 10px; color: #5a5850;
+  }
+  .container-chip .chip-name { color: #9a9488; font-size: 11px; }
+
+  .empty-batch { text-align: center; padding: 40px; color: #2a2a28; font-style: italic; font-family: Georgia, serif; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-wrap">
+
+  <div class="ferment-header">
+    <div>
+      <div class="ferment-title">{{ ferment.name }}</div>
+      <div class="ferment-meta">
+        created {{ ferment.created_at.strftime("%d %b %Y") }}
+        {% if ferment.created_by_user %} by {{ ferment.created_by_user.username }}{% endif %}
+        · #{{ ferment.id }}
+      </div>
+      <div class="ferment-badges">
+        {% if ferment.status %}
+          <span class="badge badge-status-{{ ferment.status.name | lower | replace(' ', '-') }}">{{ ferment.status.name }}</span>
+        {% endif %}
+        {% if ferment.category %}
+          <span class="badge badge-cat">{{ ferment.category.name }}</span>
+        {% endif %}
+        {% if ferment.is_ongoing %}
+          <span class="badge badge-ongoing">ongoing</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="/ferments/{{ ferment.id }}/edit" class="btn btn-ghost">edit</a>
+      <a href="/ferments" class="btn btn-ghost">← all ferments</a>
+    </div>
+  </div>
+
+  {% if ferment.description %}
+    <div class="ferment-description">{{ ferment.description }}</div>
+  {% endif %}
+
+  <div class="section-label">
+    Batches
+    <span style="color:#3a3830; font-size:10px;">{{ batches | length }}</span>
+  </div>
+
+  {% if batches %}
+  <div class="batch-list">
+    {% for batch in batches %}
+    <div class="batch-card">
+      <div class="batch-header">
+        <div class="batch-header-left">
+          {% if batch.lot_code %}
+            <span class="lot-code">{{ batch.lot_code }}</span>
+          {% endif %}
+          <span class="batch-num">B{{ batch.batch_number }} · Stage {{ batch.stage }}</span>
+          {% if batch.name %}
+            <span class="batch-title">{{ batch.name }}</span>
+          {% endif %}
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          {% if batch.status %}
+            <span class="badge badge-status-{{ batch.status.name | lower | replace(' ', '-') }}">{{ batch.status.name }}</span>
+          {% endif %}
+          {% if batch.parent_batch_id %}
+            <span style="font-size:10px; color:#3a3830;">from stage {{ batch.stage - 1 }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="batch-body">
+        <div class="batch-meta-grid">
+          <div>
+            <div class="meta-label">Started</div>
+            <div class="meta-value">{{ batch.started_at.strftime("%d %b %Y") if batch.started_at else "—" }}</div>
+          </div>
+          <div>
+            <div class="meta-label">Target Ready</div>
+            <div class="meta-value">{{ batch.target_ready_at.strftime("%d %b %Y") if batch.target_ready_at else "—" }}</div>
+          </div>
+          <div>
+            <div class="meta-label">Target pH</div>
+            <div class="meta-value {% if batch.target_ph %}highlight{% endif %}">
+              {{ batch.target_ph if batch.target_ph else "—" }}
+            </div>
+          </div>
+          <div>
+            <div class="meta-label">Age</div>
+            <div class="meta-value age">
+              {% if batch.started_at %}{{ (now - batch.started_at).days }}<span style="font-size:11px; font-family:monospace; font-weight:400;"> days</span>{% else %}—{% endif %}
+            </div>
+          </div>
+          <div>
+            <div class="meta-label">Ingredients</div>
+            <div class="meta-value">{{ batch.ingredients | length }}</div>
+          </div>
+          <div>
+            <div class="meta-label">Containers</div>
+            <div class="meta-value">{{ batch.containers | length }}</div>
+          </div>
+        </div>
+
+        {% if batch.containers %}
+        <div class="containers-wrap">
+          <div class="meta-label" style="margin-bottom:6px;">Vessels</div>
+          <div class="container-chips">
+            {% for c in batch.containers %}
+            <div class="container-chip">
+              <span class="chip-name">{{ c.name }}</span>
+              {% if c.vessel_type %}· {{ c.vessel_type.name }}{% endif %}
+              {% if c.fill_weight %}· {{ c.fill_weight }}{{ c.fill_unit or '' }}{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if batch.notes %}
+          <div class="batch-notes">{{ batch.notes }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-batch">no batches yet.</div>
+  {% endif %}
+
+</div>
+{% endblock %}
