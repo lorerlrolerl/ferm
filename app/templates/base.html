@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}ferm{% endblock %}</title>
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
+
+  <!-- Base styles (will move to main.css once design is settled) -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Mono', 'Courier New', monospace;
+      background: #111210;
+      color: #e8e3d8;
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+  </style>
+
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  <nav style="
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px; border-bottom: 0.5px solid #2a2a28;
+    background: #111210;
+  ">
+    <span style="
+      font-family: Georgia, serif; font-size: 16px;
+      font-weight: 700; color: #c8a96e; letter-spacing: 0.04em;
+    ">ferm</span>
+
+    <div style="display: flex; gap: 4px;">
+      <a href="/" style="font-size: 11px; color: #6b6860; padding: 5px 12px;
+        border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase;">
+        Dashboard
+      </a>
+      <a href="/ferments" style="font-size: 11px; color: #6b6860; padding: 5px 12px;
+        border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase;">
+        Ferments
+      </a>
+      <a href="/ingredients" style="font-size: 11px; color: #6b6860; padding: 5px 12px;
+        border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase;">
+        Ingredients
+      </a>
+      <a href="/additives" style="font-size: 11px; color: #6b6860; padding: 5px 12px;
+        border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase;">
+        Additives
+      </a>
+    </div>
+
+    <div style="font-size: 11px; color: #4a4840;">
+      {% if current_user %}
+        {{ current_user.username }}
+      {% else %}
+        <a href="/login" style="color: #c8a96e;">sign in</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <main style="padding: 24px;">
+    {% block content %}
+      <p style="color: #5a5850; font-size: 13px;">ferm is running. ✓</p>
+    {% endblock %}
+  </main>
+
+</body>
+</html>
