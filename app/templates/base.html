@@ -8,7 +8,7 @@
   <!-- HTMX -->
   <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
 
-  <!-- Base styles (will move to main.css once design is settled) -->
+  <!-- Base styles -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -18,53 +18,64 @@
       min-height: 100vh;
     }
     a { color: inherit; text-decoration: none; }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 0.5px solid #2a2a28;
+      background: #111210;
+    }
+    .nav-logo {
+      font-family: Georgia, serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #c8a96e;
+      letter-spacing: 0.04em;
+    }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a {
+      font-size: 11px;
+      color: #6b6860;
+      padding: 5px 12px;
+      border-radius: 4px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .nav-links a:hover { color: #c8a96e; background: #1a1916; }
+    .nav-user { font-size: 11px; color: #4a4840; }
+    .nav-user a { color: #c8a96e; }
+
+    main { padding: 24px; }
   </style>
 
   {% block head %}{% endblock %}
 </head>
 <body>
 
-  <nav style="
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 24px; border-bottom: 0.5px solid #2a2a28;
-    background: #111210;
-  ">
-    <span style="
-      font-family: Georgia, serif; font-size: 16px;
-      font-weight: 700; color: #c8a96e; letter-spacing: 0.04em;
-    ">ferm</span>
+  <nav>
+    <span class="nav-logo">{{ settings.APP_NAME }}</span>
 
-    <div style="display: flex; gap: 4px;">
-      <a href="/" style="font-size: 11px; color: #6b6860; padding: 5px 12px;
-        border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase;">
-        Dashboard
-      </a>
-      <a href="/ferments" style="font-size: 11px; color: #6b6860; padding: 5px 12px;
-        border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase;">
-        Ferments
-      </a>
-      <a href="/ingredients" style="font-size: 11px; color: #6b6860; padding: 5px 12px;
-        border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase;">
-        Ingredients
-      </a>
-      <a href="/additives" style="font-size: 11px; color: #6b6860; padding: 5px 12px;
-        border-radius: 4px; letter-spacing: 0.06em; text-transform: uppercase;">
-        Additives
-      </a>
+    <div class="nav-links">
+      <a href="/">Dashboard</a>
+      <a href="/ferments">Ferments</a>
+      <a href="/ingredients">Ingredients</a>
+      <a href="/additives">Additives</a>
     </div>
 
-    <div style="font-size: 11px; color: #4a4840;">
+    <div class="nav-user">
       {% if current_user %}
         {{ current_user.username }}
       {% else %}
-        <a href="/login" style="color: #c8a96e;">sign in</a>
+        <a href="/login">sign in</a>
       {% endif %}
     </div>
   </nav>
 
-  <main style="padding: 24px;">
+  <main>
     {% block content %}
-      <p style="color: #5a5850; font-size: 13px;">ferm is running. ✓</p>
+      <p style="color: #5a5850; font-size: 13px;">{{ settings.APP_NAME }} is running. ✓</p>
     {% endblock %}
   </main>
 
