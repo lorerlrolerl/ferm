@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}sign in — ferm{% endblock %}
+
+{% block head %}
+<style>
+  .login-wrap {
+    min-height: calc(100vh - 49px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .login-card {
+    width: 100%;
+    max-width: 360px;
+    background: #151412;
+    border: 0.5px solid #252421;
+    border-radius: 8px;
+    padding: 36px 32px;
+  }
+  .login-title {
+    font-family: Georgia, serif;
+    font-size: 20px;
+    color: #c8a96e;
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .login-subtitle {
+    font-size: 11px;
+    color: #4a4840;
+    margin-bottom: 28px;
+    letter-spacing: 0.04em;
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5a5850;
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    background: #0e0e0c;
+    border: 0.5px solid #2a2a28;
+    border-radius: 4px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #e8e3d8;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus {
+    border-color: #c8a96e55;
+  }
+  .error-msg {
+    font-size: 11px;
+    color: #e85858;
+    background: #2a0a0a;
+    border: 0.5px solid #3a1010;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+  }
+  .btn-login {
+    width: 100%;
+    background: #c8a96e;
+    color: #111210;
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s;
+  }
+  .btn-login:hover {
+    background: #d4b97e;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-title">ferm</div>
+    <div class="login-subtitle">fermentation kitchen tracker</div>
+
+    {% if error %}
+      <div class="error-msg">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/login">
+      <div class="field">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          autocomplete="username"
+          autofocus
+          required
+        />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          autocomplete="current-password"
+          required
+        />
+      </div>
+      <button type="submit" class="btn-login">Sign in</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

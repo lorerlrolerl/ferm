@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from app.config import settings
 from app.database import create_tables
+from app.auth import get_current_user
 import app.models  # noqa: F401 — registers all models with SQLAlchemy
-
+from app.templates import templates
 app = FastAPI(
     title=settings.APP_NAME,
     debug=settings.DEBUG,
@@ -20,10 +20,6 @@ app.mount(
     name="static",
 )
 
-# Templates — settings injected as global so every template can use it
-templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
-templates.env.globals["settings"] = settings
-
 
 @app.on_event("startup")
 def on_startup():
@@ -31,10 +27,8 @@ def on_startup():
 
 
 # ── Routers ────────────────────────────────────────────────────────────────
-# from app.routers import dashboard, ferments, ingredients
-# app.include_router(dashboard.router)
-# app.include_router(ferments.router)
-# app.include_router(ingredients.router)
+from app.routers import auth as auth_router
+app.include_router(auth_router.router)
 
 
 # ── Health check ───────────────────────────────────────────────────────────
@@ -43,7 +37,11 @@ def health():
     return {"status": "ok", "app": settings.APP_NAME}
 
 
-# ── Root ───────────────────────────────────────────────────────────────────
+# ── Root (temporary — will become dashboard) ───────────────────────────────
 @app.get("/")
-def root(request: Request):
-    return templates.TemplateResponse(request, "base.html")
+def root(request: Request, current_user=Depends(get_current_user)):
+    return templates.TemplateResponse(
+        request,
+        "base.html",
+        {"current_user": current_user},
+    )
