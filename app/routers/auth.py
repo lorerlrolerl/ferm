@@ -1,11 +1,7 @@
-"""
-Auth router — login and logout.
-"""
-
-from fastapi import APIRouter, Depends, Form, Request, Response, status
+from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from app.templates import templates
+
 from app.auth import (
     COOKIE_NAME,
     COOKIE_MAX_AGE,
@@ -15,6 +11,7 @@ from app.auth import (
 )
 from app.database import get_db
 from app.models.user import User
+from app.templates import templates
 
 router = APIRouter()
 
@@ -23,12 +20,10 @@ router = APIRouter()
 def login_page(
     request: Request,
     current_user=Depends(get_current_user),
-    error: str = None,
 ):
-    # Already logged in — go to dashboard
     if current_user:
         return RedirectResponse("/", status_code=status.HTTP_302_FOUND)
-    return templates.TemplateResponse(request, "login.html", {"error": error})
+    return templates.TemplateResponse(request, "login.html", {"error": None})
 
 
 @router.post("/login")
@@ -56,13 +51,15 @@ def login(
         key=COOKIE_NAME,
         value=create_session_cookie(user.id),
         max_age=COOKIE_MAX_AGE,
-        httponly=True,   # not accessible via JS
-        samesite="lax",  # CSRF protection
-        secure=False,    # set True in production with HTTPS
+        httponly=True,
+        samesite="lax",
+        secure=False,
     )
     return response
 
 
+# Accept both GET and POST so a plain <a href="/logout"> works in the nav
+@router.get("/logout")
 @router.post("/logout")
 def logout():
     response = RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)

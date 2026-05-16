@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}ferm{% endblock %}</title>
 
-  <!-- HTMX -->
   <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
 
-  <!-- Base styles -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -26,6 +24,9 @@
       padding: 12px 24px;
       border-bottom: 0.5px solid #2a2a28;
       background: #111210;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     .nav-logo {
       font-family: Georgia, serif;
@@ -42,10 +43,41 @@
       border-radius: 4px;
       letter-spacing: 0.06em;
       text-transform: uppercase;
+      transition: color 0.15s, background 0.15s;
     }
-    .nav-links a:hover { color: #c8a96e; background: #1a1916; }
-    .nav-user { font-size: 11px; color: #4a4840; }
-    .nav-user a { color: #c8a96e; }
+    .nav-links a:hover,
+    .nav-links a.active { color: #c8a96e; background: #1a1916; }
+
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+    }
+    .nav-username {
+      color: #5a5850;
+      letter-spacing: 0.04em;
+    }
+    .nav-role {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #3a3830;
+      background: #1a1916;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .nav-logout {
+      font-size: 10px;
+      color: #3a3830;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 3px;
+      transition: color 0.15s;
+    }
+    .nav-logout:hover { color: #e85858; }
+    .nav-signin { color: #c8a96e; font-size: 11px; }
 
     main { padding: 24px; }
   </style>
@@ -55,28 +87,31 @@
 <body>
 
   <nav>
-    <span class="nav-logo">{{ settings.APP_NAME }}</span>
+    <a href="/" class="nav-logo">{{ settings.APP_NAME }}</a>
 
+    {% if current_user %}
     <div class="nav-links">
-      <a href="/">Dashboard</a>
-      <a href="/ferments">Ferments</a>
-      <a href="/ingredients">Ingredients</a>
-      <a href="/additives">Additives</a>
+      <a href="/" {% if request.url.path == "/" %}class="active"{% endif %}>Dashboard</a>
+      <a href="/ferments" {% if request.url.path.startswith("/ferments") %}class="active"{% endif %}>Ferments</a>
+      <a href="/ingredients" {% if request.url.path.startswith("/ingredients") %}class="active"{% endif %}>Ingredients</a>
+      <a href="/additives" {% if request.url.path.startswith("/additives") %}class="active"{% endif %}>Additives</a>
     </div>
 
     <div class="nav-user">
-      {% if current_user %}
-        {{ current_user.username }}
-      {% else %}
-        <a href="/login">sign in</a>
-      {% endif %}
+      <span class="nav-username">{{ current_user.username }}</span>
+      <span class="nav-role">{{ current_user.role.value }}</span>
+      <a href="/logout" class="nav-logout">sign out</a>
     </div>
+    {% else %}
+    <div class="nav-links"></div>
+    <div class="nav-user">
+      <a href="/login" class="nav-signin">sign in</a>
+    </div>
+    {% endif %}
   </nav>
 
   <main>
-    {% block content %}
-      <p style="color: #5a5850; font-size: 13px;">{{ settings.APP_NAME }} is running. ✓</p>
-    {% endblock %}
+    {% block content %}{% endblock %}
   </main>
 
 </body>
