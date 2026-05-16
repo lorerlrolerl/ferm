@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+
+{% block title %}dashboard — ferm{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Layout ────────────────────────────────────────────────────── */
+  .dash {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .dash-main { min-width: 0; }
+  .dash-side {}
+
+  /* ── KPI strip ─────────────────────────────────────────────────── */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .kpi {
+    background: #151412;
+    border: 0.5px solid #252421;
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .kpi-label {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #4a4840;
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-family: Georgia, serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .kpi-value.amber  { color: #c8a96e; }
+  .kpi-value.green  { color: #4db88a; }
+  .kpi-value.lime   { color: #a0c840; }
+  .kpi-value.muted  { color: #3a3830; }
+
+  /* ── Section label ──────────────────────────────────────────────── */
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #4a4840;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: #1e1d1b;
+  }
+
+  /* ── Ferment cards ──────────────────────────────────────────────── */
+  .ferment-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ferment-card {
+    background: #151412;
+    border: 0.5px solid #252421;
+    border-radius: 6px;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    text-decoration: none;
+    color: inherit;
+  }
+  .ferment-card:hover {
+    border-color: #3a3830;
+    background: #1a1916;
+  }
+  .ferment-name {
+    font-family: Georgia, serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #d8d3c8;
+    font-style: italic;
+  }
+  .ferment-meta {
+    font-size: 10px;
+    color: #4a4840;
+    margin-top: 3px;
+    letter-spacing: 0.02em;
+  }
+  .ferment-badges {
+    display: flex;
+    gap: 5px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .badge {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .badge-status-active   { background: #0a1e10; color: #4db88a; border: 0.5px solid #143020; }
+  .badge-status-stasis   { background: #2a1a00; color: #c8a96e; border: 0.5px solid #3a2800; }
+  .badge-status-ready    { background: #1e2a0a; color: #a0c840; border: 0.5px solid #2a3810; }
+  .badge-status-failed   { background: #2a0a0a; color: #e85858; border: 0.5px solid #3a1010; }
+  .badge-status-stopped  { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
+  .badge-status-default  { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
+
+  .badge-cat { background: #1a1a30; color: #8888c8; border: 0.5px solid #2a2a48; }
+  .badge-ongoing { background: #1a2a1a; color: #5a8a5a; border: 0.5px solid #243824; font-style: italic; }
+
+  .ferment-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+  .ferment-age {
+    font-family: Georgia, serif;
+    font-size: 20px;
+    color: #3a3830;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .ferment-age span {
+    font-family: 'DM Mono', 'Courier New', monospace;
+    font-size: 9px;
+    color: #3a3830;
+    font-weight: 400;
+  }
+  .ferment-stage {
+    font-size: 9px;
+    color: #3a3830;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* ── Empty state ────────────────────────────────────────────────── */
+  .empty-state {
+    background: #151412;
+    border: 0.5px dashed #252421;
+    border-radius: 6px;
+    padding: 40px 24px;
+    text-align: center;
+  }
+  .empty-state-title {
+    font-family: Georgia, serif;
+    font-size: 15px;
+    color: #3a3830;
+    margin-bottom: 8px;
+    font-style: italic;
+  }
+  .empty-state-sub {
+    font-size: 11px;
+    color: #2a2a28;
+    margin-bottom: 16px;
+  }
+  .btn {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: #c8a96e;
+    color: #111210;
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: #d4b97e; }
+
+  /* ── Sidebar ────────────────────────────────────────────────────── */
+  .side-section { margin-bottom: 24px; }
+
+  .alert-list { display: flex; flex-direction: column; gap: 6px; }
+  .alert-item {
+    background: #151412;
+    border: 0.5px solid #252421;
+    border-left: 2px solid #c8a96e;
+    border-radius: 0 4px 4px 0;
+    padding: 10px 12px;
+  }
+  .alert-item.overdue { border-left-color: #e85858; }
+  .alert-name {
+    font-size: 11px;
+    color: #c8c3b8;
+    font-family: Georgia, serif;
+    font-style: italic;
+  }
+  .alert-meta { font-size: 10px; color: #4a4840; margin-top: 2px; }
+  .alert-due  { font-size: 10px; color: #e85858; margin-top: 2px; }
+
+  .side-empty {
+    font-size: 11px;
+    color: #2a2a28;
+    font-style: italic;
+    padding: 12px 0;
+  }
+
+  /* ── Greeting ───────────────────────────────────────────────────── */
+  .greeting {
+    margin-bottom: 24px;
+  }
+  .greeting-title {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    color: #c8a96e;
+    font-style: italic;
+    margin-bottom: 4px;
+  }
+  .greeting-sub {
+    font-size: 11px;
+    color: #3a3830;
+    letter-spacing: 0.04em;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash">
+
+  <!-- ── Main column ──────────────────────────────────────────────── -->
+  <div class="dash-main">
+
+    <!-- Greeting -->
+    <div class="greeting">
+      <div class="greeting-title">good morning, {{ current_user.username }}.</div>
+      <div class="greeting-sub">{{ now.strftime("%A, %d %B %Y") }}</div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-label">Active</div>
+        <div class="kpi-value amber">{{ active_count }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">In Stasis</div>
+        <div class="kpi-value muted">{{ stasis_count }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Ready</div>
+        <div class="kpi-value lime">{{ ready_count }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Total</div>
+        <div class="kpi-value muted">{{ total_ferments }}</div>
+      </div>
+    </div>
+
+    <!-- Active ferments -->
+    <div class="section-label">Active &amp; Stasis</div>
+
+    {% if ferment_data %}
+    <div class="ferment-grid">
+      {% for item in ferment_data %}
+      {% set f = item.ferment %}
+      {% set batch = item.latest_batch %}
+      <a href="/ferments/{{ f.id }}" class="ferment-card">
+        <div>
+          <div class="ferment-name">{{ f.name }}</div>
+          <div class="ferment-meta">
+            {% if batch and batch.started_at %}
+              started {{ batch.started_at.strftime("%d %b %Y") }}
+              {% if batch.target_ready_at %}
+                · target {{ batch.target_ready_at.strftime("%d %b") }}
+              {% endif %}
+            {% else %}
+              created {{ f.created_at.strftime("%d %b %Y") }}
+            {% endif %}
+          </div>
+          <div class="ferment-badges">
+            {% if f.status %}
+              <span class="badge badge-status-{{ f.status.name | lower | replace(' ', '-') }}">
+                {{ f.status.name }}
+              </span>
+            {% endif %}
+            {% if f.category %}
+              <span class="badge badge-cat">{{ f.category.name }}</span>
+            {% endif %}
+            {% if f.is_ongoing %}
+              <span class="badge badge-ongoing">ongoing</span>
+            {% endif %}
+            {% if batch %}
+              <span class="badge badge-status-default">stage {{ batch.stage }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="ferment-right">
+          {% if item.age_days is not none %}
+            <div class="ferment-age">
+              {{ item.age_days }}<span> days</span>
+            </div>
+          {% endif %}
+          {% if batch and batch.status %}
+            <div class="ferment-stage">{{ batch.status.name }}</div>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-title">no active ferments.</div>
+      <div class="empty-state-sub">start tracking your first fermentation project.</div>
+      <a href="/ferments/new" class="btn btn-primary">+ new ferment</a>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- ── Sidebar ───────────────────────────────────────────────────── -->
+  <div class="dash-side">
+
+    <div class="side-section">
+      <div class="section-label">Attention needed</div>
+      {% if due_schedules %}
+        <div class="alert-list">
+          {% for schedule in due_schedules %}
+          {% set overdue = schedule.next_due_at < now %}
+          <div class="alert-item {% if overdue %}overdue{% endif %}">
+            <div class="alert-name">{{ schedule.name }}</div>
+            <div class="alert-meta">{{ schedule.target_type }} · {{ schedule.description or "no description" }}</div>
+            <div class="alert-due">
+              {% if overdue %}
+                overdue since {{ schedule.next_due_at.strftime("%d %b") }}
+              {% else %}
+                due {{ schedule.next_due_at.strftime("%d %b") }}
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="side-empty">nothing due today.</div>
+      {% endif %}
+    </div>
+
+    <div class="side-section">
+      <div class="section-label">Quick links</div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <a href="/ferments/new" class="btn btn-primary" style="text-align:center;">+ new ferment</a>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
