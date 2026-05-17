@@ -26,12 +26,16 @@ def on_startup():
 from app.routers import auth as auth_router
 from app.routers import dashboard as dashboard_router
 from app.routers import ferments as ferments_router
+from app.routers import batches as batches_router
 from app.routers import ingredients as ingredients_router
+from app.routers import additives as additives_router
 
 app.include_router(auth_router.router)
 app.include_router(dashboard_router.router)
 app.include_router(ferments_router.router)
+app.include_router(batches_router.router)
 app.include_router(ingredients_router.router)
+app.include_router(additives_router.router)
 
 
 @app.get("/health")

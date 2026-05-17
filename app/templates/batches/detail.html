@@ -1,0 +1,664 @@
+{% extends "base.html" %}
+{% block title %}{{ batch.lot_code or 'Batch ' + batch.batch_number|string }} — ferm{% endblock %}
+
+{% block head %}
+<style>
+  .detail-wrap { max-width: 1000px; margin: 0 auto; }
+
+  .breadcrumb { font-size: 11px; color: #3a3830; margin-bottom: 20px; display: flex; align-items: center; gap: 6px; }
+  .breadcrumb a { color: #5a5850; text-decoration: none; }
+  .breadcrumb a:hover { color: #c8a96e; }
+  .breadcrumb-sep { color: #2a2a28; }
+
+  .batch-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 16px; }
+  .lot-code { font-family: 'DM Mono','Courier New',monospace; font-size: 18px; color: #c8a96e; letter-spacing: 0.06em; background: #1a1200; border: 0.5px solid #3a2800; border-radius: 4px; padding: 4px 14px; display: inline-block; margin-bottom: 8px; }
+  .batch-num { font-size: 11px; color: #3a3830; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .batch-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+
+  .badge { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
+  .badge-status-active  { background: #0a1e10; color: #4db88a; border: 0.5px solid #143020; }
+  .badge-status-stasis  { background: #2a1a00; color: #c8a96e; border: 0.5px solid #3a2800; }
+  .badge-status-ready   { background: #1e2a0a; color: #a0c840; border: 0.5px solid #2a3810; }
+  .badge-status-failed  { background: #2a0a0a; color: #e85858; border: 0.5px solid #3a1010; }
+  .badge-status-stopped { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
+  .badge-status-default { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
+  .badge-stage { background: #1a1a30; color: #8888c8; border: 0.5px solid #2a2a48; }
+
+  .btn { display: inline-block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 14px; border-radius: 4px; cursor: pointer; transition: background 0.15s; text-decoration: none; font-family: inherit; border: none; }
+  .btn-ghost { background: transparent; color: #4a4840; border: 0.5px solid #252421; }
+  .btn-ghost:hover { color: #e8e3d8; border-color: #3a3830; }
+  .btn-primary { background: #c8a96e; color: #111210; font-weight: 600; }
+  .btn-primary:hover { background: #d4b97e; }
+  .btn-danger { background: transparent; color: #e85858; border: 0.5px solid #3a1010; font-size: 9px; padding: 3px 8px; }
+  .btn-danger:hover { background: #2a0a0a; }
+  .btn-sm { font-size: 9px; padding: 4px 12px; }
+  .btn-toggle { background: #1a1916; color: #5a5850; border: 0.5px solid #252421; font-size: 9px; padding: 4px 10px; cursor: pointer; border-radius: 4px; font-family: inherit; letter-spacing: 0.06em; text-transform: uppercase; }
+  .btn-toggle:hover { color: #c8a96e; border-color: #3a3830; }
+
+  .stats-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap: 8px; margin-bottom: 24px; }
+  .stat { background: #151412; border: 0.5px solid #252421; border-radius: 6px; padding: 10px 14px; }
+  .stat-label { font-size: 9px; color: #3a3830; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .stat-value { font-size: 18px; font-family: Georgia,serif; font-weight: 700; color: #9a9488; line-height: 1.1; }
+  .stat-value.amber { color: #c8a96e; }
+  .stat-value.small { font-size: 13px; }
+  .stat-value.warn  { color: #e85858; }
+  .stat-sub { font-size: 9px; color: #3a3830; margin-top: 2px; }
+
+  .batch-notes-display { font-size: 12px; color: #5a5850; line-height: 1.6; font-style: italic; background: #151412; border: 0.5px solid #252421; border-radius: 6px; padding: 14px 16px; margin-bottom: 24px; }
+
+  .edit-panel { background: #0e0e0c; border: 0.5px solid #3a2800; border-radius: 6px; padding: 18px 20px; margin-bottom: 24px; display: none; }
+  .edit-panel.open { display: block; }
+  .edit-panel-title { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #c8a96e; margin-bottom: 16px; }
+  .edit-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 10px; margin-bottom: 10px; }
+  .edit-field { display: flex; flex-direction: column; gap: 4px; }
+  .edit-field label { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a4840; }
+  .edit-field input, .edit-field select, .edit-field textarea { background: #151412; border: 0.5px solid #252421; border-radius: 4px; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #e8e3d8; outline: none; }
+  .edit-field input:focus, .edit-field select:focus, .edit-field textarea:focus { border-color: #c8a96e55; }
+  .edit-field select option { background: #151412; }
+  .edit-field textarea { resize: vertical; min-height: 60px; }
+  .edit-field .lot-code-input { font-family: 'DM Mono','Courier New',monospace; color: #c8a96e; letter-spacing: 0.06em; }
+  .edit-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+  .section { margin-bottom: 28px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .section-label { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #4a4840; display: flex; align-items: center; gap: 8px; }
+  .section-label::after { content: ''; width: 40px; height: 0.5px; background: #1e1d1b; }
+  .section-count { color: #3a3830; }
+
+  .item-list { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+  .item-row { display: flex; align-items: center; justify-content: space-between; background: #151412; border: 0.5px solid #1e1d1b; border-radius: 4px; padding: 9px 12px; gap: 12px; }
+  .item-name { font-size: 12px; color: #c8c3b8; flex: 1; }
+  .item-sub { font-size: 10px; color: #3a3830; margin-top: 1px; }
+  .item-qty { font-family: 'DM Mono','Courier New',monospace; font-size: 12px; color: #c8a96e; min-width: 60px; text-align: right; }
+  .item-actions { display: none; }
+  .item-notes { font-size: 10px; color: #3a3830; font-style: italic; margin-top: 2px; }
+
+  .container-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 8px; margin-bottom: 8px; }
+  .container-card { background: #151412; border: 0.5px solid #252421; border-radius: 6px; padding: 12px 14px; }
+  .container-name { font-size: 13px; color: #c8c3b8; font-family: Georgia,serif; font-style: italic; margin-bottom: 6px; }
+  .container-meta { font-size: 10px; color: #3a3830; line-height: 1.8; }
+  .container-actions { display: none; margin-top: 8px; }
+
+  .add-form { background: #0e0e0c; border: 0.5px dashed #252421; border-radius: 6px; padding: 14px 16px; display: none; margin-top: 6px; }
+  .add-form.open { display: block; }
+  .add-form-title { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #3a3830; margin-bottom: 12px; }
+  .form-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+  .form-field { display: flex; flex-direction: column; gap: 4px; }
+  .form-field label { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a4840; }
+  .form-field select, .form-field input { background: #151412; border: 0.5px solid #252421; border-radius: 4px; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #e8e3d8; outline: none; }
+  .form-field select:focus, .form-field input:focus { border-color: #c8a96e55; }
+  .form-field select option { background: #151412; }
+  .form-field.grow { flex: 1; min-width: 160px; }
+  .form-field.small { width: 80px; }
+  .form-field.medium { width: 120px; }
+
+  /* Calculator */
+  .calc-toggles { display: flex; gap: 10px; margin-top: 10px; }
+  .calc-toggle-btn { font-size: 10px; color: #5a5850; cursor: pointer; background: #151412; border: 0.5px solid #252421; padding: 4px 10px; border-radius: 3px; font-family: inherit; letter-spacing: 0.04em; }
+  .calc-toggle-btn:hover { color: #c8a96e; border-color: #3a2800; }
+  .calc-toggle-btn.active { color: #c8a96e; border-color: #3a2800; background: #1a1200; }
+
+  .calc-panel { background: #111; border: 0.5px solid #2a2418; border-radius: 4px; padding: 14px 16px; margin-top: 8px; display: none; }
+  .calc-panel.open { display: block; }
+  .calc-panel-title { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: #c8a96e; margin-bottom: 12px; }
+  .calc-section-label { font-size: 10px; color: #4a4840; margin-bottom: 6px; }
+  .calc-base-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .calc-base-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #5a5850; cursor: pointer; }
+  .calc-base-item input[type="checkbox"] { accent-color: #c8a96e; cursor: pointer; }
+  .calc-base-item:hover { color: #9a9488; }
+  .calc-base-item .ing-qty { font-family: 'DM Mono','Courier New',monospace; color: #3a3830; font-size: 10px; margin-left: auto; }
+  .calc-input-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; }
+  .calc-input-field { display: flex; flex-direction: column; gap: 4px; }
+  .calc-input-field label { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a4840; }
+  .calc-input-field input { background: #151412; border: 0.5px solid #252421; border-radius: 4px; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #e8e3d8; outline: none; width: 100px; }
+  .calc-input-field input:focus { border-color: #c8a96e55; }
+  .calc-formula { font-size: 10px; color: #3a3830; font-style: italic; margin-bottom: 8px; }
+  .calc-result { font-size: 13px; color: #c8a96e; font-family: 'DM Mono','Courier New',monospace; margin-bottom: 8px; min-height: 20px; }
+  .calc-apply { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; background: #c8a96e22; color: #c8a96e; border: 0.5px solid #c8a96e44; padding: 5px 12px; border-radius: 3px; cursor: pointer; font-family: inherit; }
+  .calc-apply:hover { background: #c8a96e33; }
+
+  .empty-section { font-size: 11px; color: #2a2a28; font-style: italic; padding: 8px 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-wrap">
+
+  <div class="breadcrumb">
+    <a href="/ferments">ferments</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/ferments/{{ ferment.id }}">{{ ferment.name }}</a>
+    <span class="breadcrumb-sep">/</span>
+    <span>{{ batch.lot_code or 'batch ' + batch.batch_number|string }}</span>
+  </div>
+
+  <div class="batch-header">
+    <div>
+      {% if batch.lot_code %}<div class="lot-code">{{ batch.lot_code }}</div>{% endif %}
+      <div class="batch-num">
+        Batch {{ batch.batch_number }} · Stage {{ batch.stage }}
+        {% if batch.parent_batch %} · from {{ batch.parent_batch.lot_code or 'B' + batch.parent_batch.batch_number|string }}{% endif %}
+        {% if batch.created_by_user %} · by {{ batch.created_by_user.username }}{% endif %}
+      </div>
+      <div class="batch-badges">
+        {% if batch.status %}
+          <span class="badge badge-status-{{ batch.status.name|lower|replace(' ','-') }}">{{ batch.status.name }}</span>
+        {% endif %}
+        <span class="badge badge-stage">Stage {{ batch.stage }}</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; flex-shrink:0; align-items:flex-start;">
+      {% if current_user.role.value in ['admin','editor'] %}
+        <button class="btn btn-ghost btn-sm" onclick="toggleEdit()" id="edit-btn">edit batch</button>
+      {% endif %}
+      <a href="/ferments/{{ ferment.id }}/batches/new" class="btn btn-ghost btn-sm">+ new batch</a>
+      <a href="/ferments/{{ ferment.id }}" class="btn btn-ghost btn-sm">← {{ ferment.name }}</a>
+    </div>
+  </div>
+
+  {% if current_user.role.value in ['admin','editor'] %}
+  <div class="edit-panel" id="edit-panel">
+    <div class="edit-panel-title">editing batch metadata</div>
+    <form method="post" action="/ferments/{{ ferment.id }}/batches/{{ batch.id }}/edit">
+      <div class="edit-row">
+        <div class="edit-field">
+          <label>Lot Code</label>
+          <input type="text" name="lot_code" value="{{ batch.lot_code or '' }}" class="lot-code-input" />
+        </div>
+        <div class="edit-field">
+          <label>Status</label>
+          <select name="status_id">
+            <option value="">— none —</option>
+            {% for st in statuses %}
+              <option value="{{ st.id }}" {% if batch.status_id == st.id %}selected{% endif %}>{{ st.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="edit-field">
+          <label>Stage</label>
+          <input type="number" name="stage" value="{{ batch.stage }}" min="1" />
+        </div>
+      </div>
+      <div class="edit-row">
+        <div class="edit-field">
+          <label>Started</label>
+          <input type="date" name="started_at" value="{{ batch.started_at.strftime('%Y-%m-%d') if batch.started_at else '' }}" />
+        </div>
+        <div class="edit-field">
+          <label>Target Ready</label>
+          <input type="date" name="target_ready_at" value="{{ batch.target_ready_at.strftime('%Y-%m-%d') if batch.target_ready_at else '' }}" />
+        </div>
+        <div class="edit-field">
+          <label>Target pH</label>
+          <input type="number" name="target_ph" step="0.1" min="0" max="14" value="{{ batch.target_ph or '' }}" />
+        </div>
+      </div>
+      <div class="edit-field" style="margin-bottom:10px;">
+        <label>Notes</label>
+        <textarea name="notes">{{ batch.notes or '' }}</textarea>
+      </div>
+      <div class="edit-actions">
+        <button type="submit" class="btn btn-primary btn-sm">save</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleEdit()">cancel</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="stats-strip">
+    <div class="stat">
+      <div class="stat-label">Started</div>
+      <div class="stat-value small">{{ batch.started_at.strftime("%d %b %Y") if batch.started_at else "—" }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Age</div>
+      <div class="stat-value amber">{% if batch.started_at %}{{ (now - batch.started_at).days }}{% else %}—{% endif %}</div>
+      <div class="stat-sub">days</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Target Ready</div>
+      <div class="stat-value small">{{ batch.target_ready_at.strftime("%d %b") if batch.target_ready_at else "—" }}</div>
+      {% if batch.target_ready_at %}
+        {% set days_left = (batch.target_ready_at - now).days %}
+        <div class="stat-sub">
+          {% if days_left > 0 %}{{ days_left }}d left{% elif days_left == 0 %}today{% else %}{{ days_left|abs }}d overdue{% endif %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="stat">
+      <div class="stat-label">Target pH</div>
+      <div class="stat-value amber">{{ batch.target_ph if batch.target_ph else "—" }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Ingredients</div>
+      <div class="stat-value">{{ batch.ingredients|length }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Containers</div>
+      <div class="stat-value">{{ batch.containers|length }}</div>
+    </div>
+  </div>
+
+  {% if batch.notes %}
+    <div class="batch-notes-display">{{ batch.notes }}</div>
+  {% endif %}
+
+  <!-- Ingredient data for JS calculators -->
+  <script>
+    const batchIngredients = [
+      {% for bi in batch.ingredients %}
+      { id: {{ bi.ingredient_id }}, name: {{ bi.ingredient.name | tojson }}, quantity: {{ bi.quantity or 0 }} },
+      {% endfor %}
+    ];
+  </script>
+
+  <!-- ── Ingredients ──────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-label">Ingredients <span class="section-count">{{ batch.ingredients|length }}</span></div>
+      {% if current_user.role.value in ['admin','editor'] %}
+        <button class="btn-toggle" onclick="toggleSection('ing')">+ add ingredient</button>
+      {% endif %}
+    </div>
+
+    {% if batch.ingredients %}
+    <div class="item-list">
+      {% for bi in batch.ingredients %}
+      <div class="item-row">
+        <div style="flex:1;">
+          <div class="item-name">{{ bi.ingredient.name }}</div>
+          {% if bi.ingredient.cut_size %}<div class="item-sub">{{ bi.ingredient.cut_size.name }}</div>{% endif %}
+          {% if bi.notes %}<div class="item-notes">{{ bi.notes }}</div>{% endif %}
+        </div>
+        <div class="item-qty">{{ bi.quantity if bi.quantity else "—" }}{% if bi.quantity %} g{% endif %}</div>
+        <div class="item-actions">
+          <form method="post" action="/ferments/{{ ferment.id }}/batches/{{ batch.id }}/ingredients/{{ bi.ingredient_id }}/remove">
+            <button type="submit" class="btn btn-danger">×</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="empty-section">no ingredients added yet.</div>
+    {% endif %}
+
+    {% if current_user.role.value in ['admin','editor'] and available_ingredients %}
+    <div class="add-form" id="ing-form">
+      <div class="add-form-title">Add ingredient</div>
+      <form method="post" action="/ferments/{{ ferment.id }}/batches/{{ batch.id }}/ingredients/add">
+        <div class="form-row">
+          <div class="form-field grow">
+            <label>Ingredient</label>
+            <select name="ingredient_id" required>
+              <option value="">— select —</option>
+              {% for ing in available_ingredients %}
+                <option value="{{ ing.id }}">{{ ing.name }}{% if ing.cut_size %} ({{ ing.cut_size.name }}){% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-field small">
+            <label>Qty (g)</label>
+            <input type="number" name="quantity" id="ing-qty" step="0.1" min="0" placeholder="0" />
+          </div>
+          <div class="form-field" style="justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary btn-sm">add</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Additives ─────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-label">Additives <span class="section-count">{{ batch.additives|length }}</span></div>
+      {% if current_user.role.value in ['admin','editor'] %}
+        <button class="btn-toggle" onclick="toggleSection('add')">+ add additive</button>
+      {% endif %}
+    </div>
+
+    {% if batch.additives %}
+    <div class="item-list">
+      {% for ba in batch.additives %}
+      <div class="item-row">
+        <div style="flex:1;">
+          <div class="item-name">{{ ba.additive.name }}</div>
+          <div class="item-sub">{{ ba.additive.additive_type.value }}</div>
+          {% if ba.notes %}<div class="item-notes">{{ ba.notes }}</div>{% endif %}
+        </div>
+        <div class="item-qty">{{ ba.quantity if ba.quantity else "—" }}{% if ba.quantity %} g{% endif %}</div>
+        <div class="item-actions">
+          <form method="post" action="/ferments/{{ ferment.id }}/batches/{{ batch.id }}/additives/{{ ba.additive_id }}/remove">
+            <button type="submit" class="btn btn-danger">×</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="empty-section">no additives added yet.</div>
+    {% endif %}
+
+    {% if current_user.role.value in ['admin','editor'] and available_additives %}
+    <div class="add-form" id="add-form">
+      <div class="add-form-title">Add additive</div>
+      <form method="post" action="/ferments/{{ ferment.id }}/batches/{{ batch.id }}/additives/add">
+        <div class="form-row">
+          <div class="form-field grow">
+            <label>Additive</label>
+            <select name="additive_id" required>
+              <option value="">— select —</option>
+              {% for a in available_additives %}
+                <option value="{{ a.id }}">{{ a.name }} ({{ a.additive_type.value }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-field small">
+            <label>Qty (g)</label>
+            <input type="number" name="quantity" id="add-qty" step="0.01" min="0" placeholder="0" />
+          </div>
+          <div class="form-field" style="justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary btn-sm">add</button>
+          </div>
+        </div>
+
+        {% if batch.ingredients %}
+        <!-- Calculator toggle buttons -->
+        <div class="calc-toggles">
+          <button type="button" class="calc-toggle-btn" id="pct-toggle-btn" onclick="openCalc('pct')">⚡ % of weight</button>
+          <button type="button" class="calc-toggle-btn" id="bx-toggle-btn"  onclick="openCalc('bx')">⚡ Brix (°Bx)</button>
+        </div>
+
+        <!-- % Calculator -->
+        <div class="calc-panel" id="pct-panel">
+          <div class="calc-panel-title">% of weight calculator</div>
+          <div class="calc-formula">additive = base weight × %</div>
+          <div class="calc-section-label">Base weight:</div>
+          <div class="calc-base-list" id="pct-base-list">
+            <label class="calc-base-item">
+              <input type="checkbox" id="pct-all" onchange="pctToggleAll(this)" checked />
+              <span>Total batch weight</span>
+              <span class="ing-qty" id="pct-total-label"></span>
+            </label>
+            {% for bi in batch.ingredients %}{% if bi.quantity %}
+            <label class="calc-base-item">
+              <input type="checkbox" class="pct-ing" data-qty="{{ bi.quantity }}" onchange="pctUpdate()" />
+              <span>{{ bi.ingredient.name }}</span>
+              <span class="ing-qty">{{ bi.quantity }}g</span>
+            </label>
+            {% endif %}{% endfor %}
+          </div>
+          <div class="calc-input-row">
+            <div class="calc-input-field">
+              <label>Percentage %</label>
+              <input type="number" id="pct-input" step="0.01" min="0" max="100" placeholder="2.25" oninput="pctUpdate()" />
+            </div>
+          </div>
+          <div class="calc-result" id="pct-result">—</div>
+          <button type="button" class="calc-apply" id="pct-apply" onclick="pctApply()" style="display:none;">apply to quantity</button>
+        </div>
+
+        <!-- Brix Calculator -->
+        <div class="calc-panel" id="bx-panel">
+          <div class="calc-panel-title">Brix (°Bx) calculator</div>
+          <div class="calc-formula">°Bx = additive / (additive + base) × 100 → additive = base × °Bx / (100 − °Bx)</div>
+          <div class="calc-section-label">Base weight (liquid / juice / water):</div>
+          <div class="calc-base-list" id="bx-base-list">
+            <label class="calc-base-item">
+              <input type="checkbox" id="bx-all" onchange="bxToggleAll(this)" checked />
+              <span>Total batch weight</span>
+              <span class="ing-qty" id="bx-total-label"></span>
+            </label>
+            {% for bi in batch.ingredients %}{% if bi.quantity %}
+            <label class="calc-base-item">
+              <input type="checkbox" class="bx-ing" data-qty="{{ bi.quantity }}" onchange="bxUpdate()" />
+              <span>{{ bi.ingredient.name }}</span>
+              <span class="ing-qty">{{ bi.quantity }}g</span>
+            </label>
+            {% endif %}{% endfor %}
+          </div>
+          <div class="calc-input-row">
+            <div class="calc-input-field">
+              <label>Target °Bx</label>
+              <input type="number" id="bx-input" step="0.1" min="0" max="100" placeholder="12.5" oninput="bxUpdate()" />
+            </div>
+          </div>
+          <div class="calc-result" id="bx-result">—</div>
+          <button type="button" class="calc-apply" id="bx-apply" onclick="bxApply()" style="display:none;">apply to quantity</button>
+        </div>
+        {% endif %}
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Containers ────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-label">Containers <span class="section-count">{{ batch.containers|length }}</span></div>
+      {% if current_user.role.value in ['admin','editor'] %}
+        <button class="btn-toggle" onclick="toggleSection('con')">+ add container</button>
+      {% endif %}
+    </div>
+
+    {% if batch.containers %}
+    <div class="container-grid">
+      {% for c in batch.containers %}
+      <div class="container-card">
+        <div class="container-name">{{ c.name }}</div>
+        <div class="container-meta">
+          {% if c.vessel_type %}{{ c.vessel_type.name }}{% endif %}
+          {% if c.vessel_material %} · {{ c.vessel_material.name }}{% endif %}
+          {% if c.capacity %}<br>capacity: {{ c.capacity }}{% if c.capacity_unit %} {{ c.capacity_unit }}{% endif %}{% endif %}
+          {% if c.fill_weight %}<br>fill: {{ c.fill_weight }}g{% endif %}
+          {% if c.status %}
+            <br><span class="badge badge-status-{{ c.status.name|lower|replace(' ','-') }}" style="margin-top:4px;display:inline-block;">{{ c.status.name }}</span>
+          {% endif %}
+          {% if c.notes %}<br><em style="color:#3a3830;">{{ c.notes }}</em>{% endif %}
+        </div>
+        <div class="container-actions">
+          <form method="post" action="/ferments/{{ ferment.id }}/batches/{{ batch.id }}/containers/{{ c.id }}/remove"
+            onsubmit="return confirm('Remove {{ c.name }}?')">
+            <button type="submit" class="btn btn-danger">remove</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="empty-section">no containers added yet.</div>
+    {% endif %}
+
+    {% if current_user.role.value in ['admin','editor'] %}
+    <div class="add-form" id="con-form">
+      <div class="add-form-title">Add container</div>
+      <form method="post" action="/ferments/{{ ferment.id }}/batches/{{ batch.id }}/containers/add">
+        <div class="form-row" style="margin-bottom:8px;">
+          <div class="form-field grow">
+            <label>Name *</label>
+            <input type="text" name="name" required placeholder="e.g. Jar A, Crock 1" />
+          </div>
+          <div class="form-field medium">
+            <label>Type</label>
+            <select name="vessel_type_id">
+              <option value="">— none —</option>
+              {% for vt in vessel_types %}
+                <option value="{{ vt.id }}">{{ vt.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-field medium">
+            <label>Material</label>
+            <select name="vessel_material_id">
+              <option value="">— none —</option>
+              {% for vm in vessel_materials %}
+                <option value="{{ vm.id }}">{{ vm.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field small">
+            <label>Fill (g)</label>
+            <input type="number" name="fill_weight" step="0.1" min="0" placeholder="0" />
+          </div>
+          <div class="form-field medium">
+            <label>Status</label>
+            <select name="status_id">
+              <option value="">— none —</option>
+              {% for st in statuses %}
+                <option value="{{ st.id }}">{{ st.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-field" style="justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary btn-sm">add</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  // ── Helpers ───────────────────────────────────────────────────
+  function getTotalGrams() {
+    return batchIngredients.reduce((s, i) => s + (parseFloat(i.quantity) || 0), 0);
+  }
+
+  function fmt(n) {
+    return Number.isInteger(n) ? n.toFixed(0) : n.toFixed(2);
+  }
+
+  function getBase(allCheckboxId, ingClass) {
+    const allBox = document.getElementById(allCheckboxId);
+    if (allBox && allBox.checked) return getTotalGrams();
+    let base = 0;
+    document.querySelectorAll('.' + ingClass + ':checked').forEach(b => {
+      base += parseFloat(b.dataset.qty) || 0;
+    });
+    return base;
+  }
+
+  // ── Edit panel ────────────────────────────────────────────────
+  let editOpen = false;
+  function toggleEdit() {
+    editOpen = !editOpen;
+    document.getElementById('edit-panel').classList.toggle('open', editOpen);
+    document.getElementById('edit-btn').textContent = editOpen ? 'cancel edit' : 'edit batch';
+    document.querySelectorAll('.item-actions').forEach(el => el.style.display = editOpen ? 'flex' : 'none');
+    document.querySelectorAll('.container-actions').forEach(el => el.style.display = editOpen ? 'block' : 'none');
+  }
+
+  // ── Section toggles ───────────────────────────────────────────
+  const formIds = { ing: 'ing-form', add: 'add-form', con: 'con-form' };
+  function toggleSection(key) {
+    const form = document.getElementById(formIds[key]);
+    if (form) form.classList.toggle('open');
+  }
+
+  // ── Calculator panel open/close ───────────────────────────────
+  function openCalc(mode) {
+    const pctPanel = document.getElementById('pct-panel');
+    const bxPanel  = document.getElementById('bx-panel');
+    const pctBtn   = document.getElementById('pct-toggle-btn');
+    const bxBtn    = document.getElementById('bx-toggle-btn');
+
+    if (mode === 'pct') {
+      const opening = !pctPanel.classList.contains('open');
+      pctPanel.classList.toggle('open', opening);
+      bxPanel.classList.remove('open');
+      pctBtn.classList.toggle('active', opening);
+      bxBtn.classList.remove('active');
+      if (opening) pctUpdate();
+    } else {
+      const opening = !bxPanel.classList.contains('open');
+      bxPanel.classList.toggle('open', opening);
+      pctPanel.classList.remove('open');
+      bxBtn.classList.toggle('active', opening);
+      pctBtn.classList.remove('active');
+      if (opening) bxUpdate();
+    }
+  }
+
+  // ── % Calculator ──────────────────────────────────────────────
+  function pctToggleAll(cb) {
+    document.querySelectorAll('.pct-ing').forEach(b => { b.checked = false; b.disabled = cb.checked; });
+    pctUpdate();
+  }
+
+  function pctUpdate() {
+    const base    = getBase('pct-all', 'pct-ing');
+    const pct     = parseFloat(document.getElementById('pct-input').value);
+    const result  = document.getElementById('pct-result');
+    const apply   = document.getElementById('pct-apply');
+    const total   = document.getElementById('pct-total-label');
+    if (total) total.textContent = `(${fmt(getTotalGrams())}g total)`;
+
+    if (!pct || isNaN(pct) || base === 0) {
+      result.textContent = base === 0 ? 'no base selected' : '—';
+      apply.style.display = 'none';
+      return;
+    }
+    const grams = base * pct / 100;
+    result.textContent = `${pct}% of ${fmt(base)}g = ${fmt(grams)}g`;
+    apply.style.display = 'inline-block';
+    apply.dataset.grams = fmt(grams);
+  }
+
+  function pctApply() {
+    document.getElementById('add-qty').value = document.getElementById('pct-apply').dataset.grams;
+    document.getElementById('pct-panel').classList.remove('open');
+    document.getElementById('pct-toggle-btn').classList.remove('active');
+  }
+
+  // ── Brix Calculator ───────────────────────────────────────────
+  // Formula: °Bx = additive / (additive + base) × 100
+  // Solving for additive: additive = base × °Bx / (100 − °Bx)
+  function bxToggleAll(cb) {
+    document.querySelectorAll('.bx-ing').forEach(b => { b.checked = false; b.disabled = cb.checked; });
+    bxUpdate();
+  }
+
+  function bxUpdate() {
+    const base   = getBase('bx-all', 'bx-ing');
+    const bx     = parseFloat(document.getElementById('bx-input').value);
+    const result = document.getElementById('bx-result');
+    const apply  = document.getElementById('bx-apply');
+    const total  = document.getElementById('bx-total-label');
+    if (total) total.textContent = `(${fmt(getTotalGrams())}g total)`;
+
+    if (!bx || isNaN(bx) || base === 0) {
+      result.textContent = base === 0 ? 'no base selected' : '—';
+      apply.style.display = 'none';
+      return;
+    }
+    if (bx >= 100) {
+      result.textContent = '°Bx must be less than 100';
+      apply.style.display = 'none';
+      return;
+    }
+    const additive = base * bx / (100 - bx);
+    result.textContent = `${fmt(additive)}g additive into ${fmt(base)}g base → ${fmt(additive / (additive + base) * 100)}°Bx`;
+    apply.style.display = 'inline-block';
+    apply.dataset.grams = fmt(additive);
+  }
+
+  function bxApply() {
+    document.getElementById('add-qty').value = document.getElementById('bx-apply').dataset.grams;
+    document.getElementById('bx-panel').classList.remove('open');
+    document.getElementById('bx-toggle-btn').classList.remove('active');
+  }
+
+  // Init total labels on load
+  const pctTotal = document.getElementById('pct-total-label');
+  const bxTotal  = document.getElementById('bx-total-label');
+  if (pctTotal) pctTotal.textContent = `(${fmt(getTotalGrams())}g total)`;
+  if (bxTotal)  bxTotal.textContent  = `(${fmt(getTotalGrams())}g total)`;
+</script>
+
+{% endblock %}
