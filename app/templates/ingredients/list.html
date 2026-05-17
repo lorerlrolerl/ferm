@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}ingredients — ferm{% endblock %}
+
+{% block head %}
+<style>
+  .page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
+  .page-title { font-family: Georgia, serif; font-size: 20px; font-style: italic; color: #c8a96e; }
+  .page-sub { font-size: 11px; color: #3a3830; margin-top: 2px; }
+
+  .btn { display: inline-block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 16px; border-radius: 4px; cursor: pointer; transition: background 0.15s; text-decoration: none; font-family: inherit; border: none; }
+  .btn-primary { background: #c8a96e; color: #111210; font-weight: 600; }
+  .btn-primary:hover { background: #d4b97e; }
+  .btn-danger { background: transparent; color: #e85858; border: 0.5px solid #3a1010; font-size: 9px; padding: 4px 10px; }
+  .btn-danger:hover { background: #2a0a0a; }
+  .btn-ghost { background: transparent; color: #4a4840; border: 0.5px solid #252421; }
+  .btn-ghost:hover { color: #e8e3d8; border-color: #3a3830; }
+
+  .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .filter-input, .filter-select {
+    background: #151412; border: 0.5px solid #252421; border-radius: 4px;
+    padding: 7px 12px; font-size: 12px; font-family: inherit; color: #e8e3d8; outline: none;
+  }
+  .filter-input { min-width: 200px; }
+  .filter-input:focus, .filter-select:focus { border-color: #c8a96e55; }
+  .filter-select option { background: #151412; }
+  .btn-filter { background: #1a1916; color: #6b6860; border: 0.5px solid #252421; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-family: inherit; }
+  .btn-filter:hover { color: #c8a96e; }
+
+  .ingredient-table { width: 100%; border-collapse: collapse; }
+  .ingredient-table th { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #3a3830; text-align: left; padding: 8px 12px; border-bottom: 0.5px solid #1e1d1b; font-weight: 400; }
+  .ingredient-table td { padding: 10px 12px; border-bottom: 0.5px solid #1a1916; font-size: 12px; vertical-align: middle; }
+  .ingredient-table tr:hover td { background: #151412; }
+  .ingredient-table tr:last-child td { border-bottom: none; }
+
+  .td-name { font-size: 13px; color: #d8d3c8; }
+  .td-desc { font-size: 10px; color: #3a3830; margin-top: 2px; }
+
+  .badge { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; font-weight: 500; }
+  .badge-tag { background: #1a2010; color: #6a9a5a; border: 0.5px solid #243018; }
+  .badge-cut { background: #1a1a28; color: #7878a8; border: 0.5px solid #242438; }
+
+  .tag-list { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  .error-banner {
+    background: #2a0a0a; border: 0.5px solid #3a1010; border-radius: 4px;
+    padding: 10px 14px; margin-bottom: 16px; font-size: 11px; color: #e85858;
+  }
+
+  .empty-state { text-align: center; padding: 60px 24px; color: #3a3830; }
+  .empty-state-title { font-family: Georgia, serif; font-size: 16px; font-style: italic; margin-bottom: 8px; }
+  .empty-state-sub { font-size: 11px; margin-bottom: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">ingredients</div>
+      <div class="page-sub">{{ ingredients | length }} shown</div>
+    </div>
+    {% if current_user.role.value in ['admin', 'editor'] %}
+      <a href="/ingredients/new" class="btn btn-primary">+ new ingredient</a>
+    {% endif %}
+  </div>
+
+  {% if request.query_params.get('error') == 'in_use' %}
+    <div class="error-banner">
+      Cannot delete — this ingredient is used in one or more batches.
+      You can edit it instead.
+    </div>
+  {% endif %}
+
+  <!-- Filters -->
+  <form method="get" action="/ingredients" class="filters">
+    <input type="text" name="q" class="filter-input" placeholder="search by name..." value="{{ filters.q }}" />
+    <select name="tag_id" class="filter-select">
+      <option value="">all tags</option>
+      {% for tag in tags %}
+        <option value="{{ tag.id }}" {% if filters.tag_id == tag.id %}selected{% endif %}>{{ tag.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="cut_size_id" class="filter-select">
+      <option value="">all cut sizes</option>
+      {% for cs in cut_sizes %}
+        <option value="{{ cs.id }}" {% if filters.cut_size_id == cs.id %}selected{% endif %}>{{ cs.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-filter">filter</button>
+    {% if filters.q or filters.tag_id or filters.cut_size_id %}
+      <a href="/ingredients" class="btn-filter">clear</a>
+    {% endif %}
+  </form>
+
+  {% if ingredients %}
+  <table class="ingredient-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Cut Size</th>
+        <th>Tags</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ing in ingredients %}
+      <tr>
+        <td>
+          <div class="td-name">{{ ing.name }}</div>
+          {% if ing.description %}
+            <div class="td-desc">{{ ing.description | truncate(60) }}</div>
+          {% endif %}
+        </td>
+        <td>
+          {% if ing.cut_size %}
+            <span class="badge badge-cut">{{ ing.cut_size.name }}</span>
+          {% else %}
+            <span style="color:#2a2a28; font-size:11px;">—</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="tag-list">
+            {% for tag in ing.tags %}
+              <span class="badge badge-tag">{{ tag.name }}</span>
+            {% endfor %}
+          </div>
+        </td>
+        <td style="text-align:right; white-space:nowrap;">
+          {% if current_user.role.value in ['admin', 'editor'] %}
+            <a href="/ingredients/{{ ing.id }}/edit" class="btn btn-ghost" style="font-size:9px; padding:4px 10px; margin-right:4px;">edit</a>
+          {% endif %}
+          {% if current_user.role.value == 'admin' %}
+            <form method="post" action="/ingredients/{{ ing.id }}/delete" style="display:inline;"
+              onsubmit="return confirm('Delete {{ ing.name }}? This cannot be undone.')">
+              <button type="submit" class="btn btn-danger">delete</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-title">no ingredients found.</div>
+    <div class="empty-state-sub">
+      {% if filters.q or filters.tag_id or filters.cut_size_id %}
+        try adjusting your filters.
+      {% else %}
+        add your first ingredient to start building recipes.
+      {% endif %}
+    </div>
+    {% if not (filters.q or filters.tag_id or filters.cut_size_id) and current_user.role.value in ['admin', 'editor'] %}
+      <a href="/ingredients/new" class="btn btn-primary">+ new ingredient</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

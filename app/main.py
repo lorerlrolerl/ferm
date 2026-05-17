@@ -5,8 +5,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.database import create_tables
-from app.templates import templates  # noqa: F401 — ensures globals are set
-import app.models  # noqa: F401 — registers all models with SQLAlchemy
+from app.templates import templates  # noqa: F401
+import app.models  # noqa: F401
 
 app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 
@@ -26,13 +26,14 @@ def on_startup():
 from app.routers import auth as auth_router
 from app.routers import dashboard as dashboard_router
 from app.routers import ferments as ferments_router
+from app.routers import ingredients as ingredients_router
 
 app.include_router(auth_router.router)
 app.include_router(dashboard_router.router)
 app.include_router(ferments_router.router)
+app.include_router(ingredients_router.router)
 
 
-# ── Health check ───────────────────────────────────────────────────────────
 @app.get("/health")
 def health():
     return {"status": "ok", "app": settings.APP_NAME}
