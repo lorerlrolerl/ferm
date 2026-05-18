@@ -309,6 +309,8 @@
   <!-- Ingredient data for JS calculators -->
   <script>
     const batchIngredients = {{ ingredients_json | safe }};
+    const batchAdditives   = {{ additives_json | safe }};
+    const allItems = [...batchIngredients, ...batchAdditives];
   </script>
 
   <!-- ══ OVERVIEW TAB ═════════════════════════════════════════════ -->
@@ -433,6 +435,9 @@
               {% for bi in batch.ingredients %}{% if bi.quantity %}
               <label class="calc-base-item"><input type="checkbox" class="pct-ing" data-qty="{{ bi.quantity }}" onchange="pctUpdate()" /><span>{{ bi.ingredient.name }}</span><span class="ing-qty">{{ bi.quantity }}g</span></label>
               {% endif %}{% endfor %}
+            {% for ba in batch.additives %}{% if ba.quantity %}
+              <label class="calc-base-item"><input type="checkbox" class="pct-ing" data-qty="{{ ba.quantity }}" onchange="pctUpdate()" /><span style="color:var(--orange);">{{ ba.additive.name }}</span><span class="ing-qty">{{ ba.quantity }}g</span></label>
+              {% endif %}{% endfor %}
             </div>
             <div class="calc-input-row"><div class="calc-input-field"><label>%</label><input type="number" id="pct-input" step="0.01" min="0" max="100" placeholder="2.25" oninput="pctUpdate()" /></div></div>
             <div class="calc-result" id="pct-result">—</div>
@@ -446,6 +451,9 @@
               <label class="calc-base-item"><input type="checkbox" id="bx-all" onchange="bxToggleAll(this)" checked /><span>Total batch weight</span><span class="ing-qty" id="bx-total-label"></span></label>
               {% for bi in batch.ingredients %}{% if bi.quantity %}
               <label class="calc-base-item"><input type="checkbox" class="bx-ing" data-qty="{{ bi.quantity }}" onchange="bxUpdate()" /><span>{{ bi.ingredient.name }}</span><span class="ing-qty">{{ bi.quantity }}g</span></label>
+              {% endif %}{% endfor %}
+            {% for ba in batch.additives %}{% if ba.quantity %}
+              <label class="calc-base-item"><input type="checkbox" class="bx-ing" data-qty="{{ ba.quantity }}" onchange="bxUpdate()" /><span style="color:var(--orange);">{{ ba.additive.name }}</span><span class="ing-qty">{{ ba.quantity }}g</span></label>
               {% endif %}{% endfor %}
             </div>
             <div class="calc-input-row"><div class="calc-input-field"><label>°Bx</label><input type="number" id="bx-input" step="0.1" min="0" max="100" placeholder="12.5" oninput="bxUpdate()" /></div></div>
@@ -660,7 +668,7 @@
 
 <script>
   // -- Helpers ---------------------------------------------------
-  function getTotalGrams() { return batchIngredients.reduce((s,i) => s + (parseFloat(i.quantity)||0), 0); }
+  function getTotalGrams() { return allItems.reduce((s,i) => s + (parseFloat(i.quantity)||0), 0); }
   function fmt(n) { return (n % 1 === 0) ? n.toFixed(0) : n.toFixed(2); }
   function getBase(allId, ingClass) {
     const allBox = document.getElementById(allId);

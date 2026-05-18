@@ -8,80 +8,116 @@
   <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
 
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'DM Mono', 'Courier New', monospace;
-      background: #111210;
-      color: #e8e3d8;
-      min-height: 100vh;
+    /* ── Design tokens ─────────────────────────────────────────── */
+    :root {
+      --bg:          #1e1e1e;
+      --surface:     #252526;
+      --surface-2:   #2d2d30;
+      --surface-3:   #333337;
+      --border:      #3e3e42;
+      --border-soft: #2d2d30;
+
+      --text:        #d4d4d4;
+      --text-2:      #9d9d9d;
+      --text-3:      #6a6a6a;
+
+      --accent:      #d7ba7d;
+      --accent-bg:   #2a2418;
+      --accent-dim:  #7a6a3d;
+
+      --green:       #4ec9b0;
+      --green-bg:    #0d2620;
+      --green-border:#1a3d34;
+
+      --red:         #f44747;
+      --red-bg:      #2a0f0f;
+      --red-border:  #3d1515;
+
+      --orange:      #ce9178;
+      --orange-bg:   #2a1a0f;
+      --orange-border:#3d2810;
+
+      --lime:        #b5cea8;
+      --lime-bg:     #1a2418;
+      --lime-border: #283820;
+
+      --blue:        #9cdcfe;
+      --blue-bg:     #0f1e2a;
+      --blue-border: #152d3d;
+
+      --radius:      5px;
+      --radius-lg:   8px;
     }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Mono', 'Cascadia Code', 'Consolas', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
     a { color: inherit; text-decoration: none; }
 
+    /* ── Nav ───────────────────────────────────────────────────── */
     nav {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 24px;
-      border-bottom: 0.5px solid #2a2a28;
-      background: #111210;
+      padding: 0 24px;
+      height: 44px;
+      border-bottom: 1px solid var(--border-soft);
+      background: var(--surface);
       position: sticky;
       top: 0;
       z-index: 100;
     }
+
     .nav-logo {
       font-family: Georgia, serif;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      color: #c8a96e;
+      color: var(--accent);
       letter-spacing: 0.04em;
     }
-    .nav-links { display: flex; gap: 4px; }
+
+    .nav-links { display: flex; gap: 2px; }
     .nav-links a {
       font-size: 11px;
-      color: #6b6860;
+      color: var(--text-2);
       padding: 5px 12px;
-      border-radius: 4px;
-      letter-spacing: 0.06em;
+      border-radius: var(--radius);
+      letter-spacing: 0.05em;
       text-transform: uppercase;
-      transition: color 0.15s, background 0.15s;
+      transition: color 0.12s, background 0.12s;
     }
-    .nav-links a:hover,
-    .nav-links a.active { color: #c8a96e; background: #1a1916; }
+    .nav-links a:hover { color: var(--text); background: var(--surface-2); }
+    .nav-links a.active { color: var(--accent); background: var(--accent-bg); }
 
-    .nav-user {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 11px;
-    }
-    .nav-username {
-      color: #5a5850;
-      letter-spacing: 0.04em;
-    }
+    .nav-user { display: flex; align-items: center; gap: 10px; }
+    .nav-username { font-size: 11px; color: var(--text-2); }
     .nav-role {
-      font-size: 9px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #3a3830;
-      background: #1a1916;
-      padding: 2px 6px;
-      border-radius: 3px;
+      font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-3); background: var(--surface-2);
+      padding: 2px 7px; border-radius: 3px;
+      border: 1px solid var(--border-soft);
     }
     .nav-logout {
-      font-size: 10px;
-      color: #3a3830;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 4px 8px;
-      border-radius: 3px;
-      transition: color 0.15s;
+      font-size: 10px; color: var(--text-3); letter-spacing: 0.05em;
+      text-transform: uppercase; padding: 4px 8px; border-radius: 3px;
+      transition: color 0.12s;
     }
-    .nav-logout:hover { color: #e85858; }
-    .nav-signin { color: #c8a96e; font-size: 11px; }
+    .nav-logout:hover { color: var(--red); }
+    .nav-signin { color: var(--accent); font-size: 11px; }
 
+    /* ── Main ──────────────────────────────────────────────────── */
     main { padding: 24px; }
   </style>
 
+  <link rel="stylesheet" href="/static/css/main.css" />
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -91,12 +127,14 @@
 
     {% if current_user %}
     <div class="nav-links">
-      <a href="/" {% if request.url.path == "/" %}class="active"{% endif %}>Dashboard</a>
-      <a href="/ferments" {% if request.url.path.startswith("/ferments") %}class="active"{% endif %}>Ferments</a>
+      <a href="/"            {% if request.url.path == "/" %}class="active"{% endif %}>Dashboard</a>
+      <a href="/ferments"    {% if request.url.path.startswith("/ferments") %}class="active"{% endif %}>Ferments</a>
       <a href="/ingredients" {% if request.url.path.startswith("/ingredients") %}class="active"{% endif %}>Ingredients</a>
-      <a href="/additives" {% if request.url.path.startswith("/additives") %}class="active"{% endif %}>Additives</a>
+      <a href="/additives"   {% if request.url.path.startswith("/additives") %}class="active"{% endif %}>Additives</a>
+      {% if current_user.role.value == 'admin' %}
+        <a href="/docs" target="_blank" style="color:var(--text-3);">API</a>
+      {% endif %}
     </div>
-
     <div class="nav-user">
       <span class="nav-username">{{ current_user.username }}</span>
       <span class="nav-role">{{ current_user.role.value }}</span>

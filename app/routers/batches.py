@@ -219,8 +219,19 @@ def batch_detail(
             "id": bi.ingredient_id,
             "name": bi.ingredient.name,
             "quantity": float(bi.quantity) if bi.quantity else 0,
+            "kind": "ingredient",
         }
         for bi in batch.ingredients
+    ])
+
+    additives_json = json.dumps([
+        {
+            "id": ba.additive_id,
+            "name": ba.additive.name,
+            "quantity": float(ba.quantity) if ba.quantity else 0,
+            "kind": "additive",
+        }
+        for ba in batch.additives
     ])
 
     return templates.TemplateResponse(
@@ -241,6 +252,7 @@ def batch_detail(
             "logs": logs,
             "active_tab": active_tab,
             "ingredients_json": ingredients_json,
+            "additives_json": additives_json,
         },
     )
 
