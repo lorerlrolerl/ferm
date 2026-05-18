@@ -29,6 +29,7 @@ from app.routers import ferments as ferments_router
 from app.routers import batches as batches_router
 from app.routers import ingredients as ingredients_router
 from app.routers import additives as additives_router
+from app.routers import logs as logs_router
 
 app.include_router(auth_router.router)
 app.include_router(dashboard_router.router)
@@ -36,6 +37,7 @@ app.include_router(ferments_router.router)
 app.include_router(batches_router.router)
 app.include_router(ingredients_router.router)
 app.include_router(additives_router.router)
+app.include_router(logs_router.router)
 
 
 @app.get("/health")

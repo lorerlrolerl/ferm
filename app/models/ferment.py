@@ -67,6 +67,7 @@ class Batch(Base):
     created_by_user: Mapped["User"] = relationship(back_populates="created_batches")
     parent_batch: Mapped["Batch | None"] = relationship(remote_side="Batch.id", foreign_keys=[parent_batch_id])
     child_batches: Mapped[list["Batch"]] = relationship(foreign_keys=[parent_batch_id])
+    logs: Mapped[list["BatchLog"]] = relationship(back_populates="batch", order_by="BatchLog.logged_at.desc()", cascade="all, delete-orphan")
     containers: Mapped[list["Container"]] = relationship(back_populates="batch")
     ingredients: Mapped[list["BatchIngredient"]] = relationship(back_populates="batch", cascade="all, delete-orphan")
     additives: Mapped[list["BatchAdditive"]] = relationship(back_populates="batch", cascade="all, delete-orphan")

@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -11,7 +12,8 @@ from app.lot_code import generate_lot_code, next_batch_number
 from app.models.ferment import Batch, BatchAdditive, BatchIngredient, Container, Ferment
 from app.models.ingredient import Ingredient
 from app.models.additive import Additive
-from app.models.lookup import Category, Status, VesselMaterial, VesselType
+from app.models.lookup import Category, Status, VesselMaterial, VesselType, SmellDescriptor, VisualDescriptor
+from app.models.log import BatchLog
 from app.models.user import User
 from app.templates import templates
 
@@ -197,6 +199,30 @@ def batch_detail(
         .all()
     )
 
+    logs = (
+        db.query(BatchLog)
+        .filter(BatchLog.batch_id == batch_id)
+        .options(
+            joinedload(BatchLog.logged_by),
+            joinedload(BatchLog.status),
+            joinedload(BatchLog.smell_descriptors),
+            joinedload(BatchLog.visual_descriptors),
+        )
+        .order_by(BatchLog.logged_at.desc())
+        .all()
+    )
+
+    active_tab = request.query_params.get("tab", "overview")
+
+    ingredients_json = json.dumps([
+        {
+            "id": bi.ingredient_id,
+            "name": bi.ingredient.name,
+            "quantity": float(bi.quantity) if bi.quantity else 0,
+        }
+        for bi in batch.ingredients
+    ])
+
     return templates.TemplateResponse(
         request,
         "batches/detail.html",
@@ -210,6 +236,11 @@ def batch_detail(
             "vessel_types": db.query(VesselType).order_by(VesselType.name).all(),
             "vessel_materials": db.query(VesselMaterial).order_by(VesselMaterial.name).all(),
             "statuses": db.query(Status).order_by(Status.name).all(),
+            "smell_descriptors": db.query(SmellDescriptor).order_by(SmellDescriptor.name).all(),
+            "visual_descriptors": db.query(VisualDescriptor).order_by(VisualDescriptor.name).all(),
+            "logs": logs,
+            "active_tab": active_tab,
+            "ingredients_json": ingredients_json,
         },
     )
 
