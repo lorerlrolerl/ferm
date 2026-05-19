@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}tools — ferm{% endblock %}
+{% block head %}
+<style>
+  .wrap { max-width: 900px; margin: 0 auto; }
+  .tool-type-badge { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="page-header">
+    <div>
+      <div class="page-title">tools</div>
+      <div class="page-sub">{{ tools | length }} tools</div>
+    </div>
+    {% if current_user.role.value in ['admin','editor'] %}
+      <a href="/tools/new" class="btn btn-primary">+ new tool</a>
+    {% endif %}
+  </div>
+
+  {% if tools %}
+  <table class="data-table">
+    <thead><tr><th>Name</th><th>Type</th><th>Notes</th><th>Schedules</th><th></th></tr></thead>
+    <tbody>
+      {% for t in tools %}
+      <tr>
+        <td>
+          <div class="td-name">{{ t.name }}</div>
+          {% if t.description %}<div class="td-sub">{{ t.description }}</div>{% endif %}
+        </td>
+        <td><span class="tool-type-badge">{{ t.tool_type }}</span></td>
+        <td class="td-sub">{{ t.notes or '—' }}</td>
+        <td>
+          <a href="/schedules/new?target_type=tool&target_id={{ t.id }}" class="btn btn-ghost btn-sm">+ schedule</a>
+        </td>
+        <td style="text-align:right; white-space:nowrap;">
+          {% if current_user.role.value in ['admin','editor'] %}
+            <a href="/tools/{{ t.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>
+          {% endif %}
+          {% if current_user.role.value == 'admin' %}
+            <form method="post" action="/tools/{{ t.id }}/delete" style="display:inline;"
+              onsubmit="return confirm('Delete {{ t.name }}?')">
+              <button type="submit" class="btn btn-danger">delete</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-title">no tools yet.</div>
+    <div class="empty-state-sub">add your pH meter, thermometer, and other equipment.</div>
+    {% if current_user.role.value in ['admin','editor'] %}
+      <a href="/tools/new" class="btn btn-primary">+ new tool</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

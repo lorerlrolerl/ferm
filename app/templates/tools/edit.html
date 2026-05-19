@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}edit {{ tool.name }} — ferm{% endblock %}
+{% block head %}<style>.form-wrap{max-width:540px;margin:0 auto;}.page-title{font-family:Georgia,serif;font-size:20px;font-style:italic;color:var(--accent);margin-bottom:4px;}.page-sub{font-size:11px;color:var(--text-3);margin-bottom:24px;}</style>{% endblock %}
+{% block content %}
+<div class="form-wrap">
+  <div class="page-title">edit tool</div>
+  <div class="page-sub">{{ tool.tool_type }}</div>
+  <form method="post" action="/tools/{{ tool.id }}/edit">
+    <div class="form-section">
+      <div class="form-section-title">Tool</div>
+      <div class="field">
+        <label>Name *</label>
+        <input type="text" name="name" required value="{{ tool.name }}" />
+        {% if errors.name %}<div class="field-error">{{ errors.name }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label>Type</label>
+        <input type="text" name="tool_type" value="{{ tool.tool_type }}" />
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <input type="text" name="description" value="{{ tool.description or '' }}" />
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea name="notes">{{ tool.notes or '' }}</textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button type="submit" class="btn btn-primary">save changes</button>
+      <a href="/tools" class="btn btn-ghost">cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

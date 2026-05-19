@@ -335,20 +335,26 @@
 
     <div class="side-section">
       <div class="section-label">Attention needed</div>
-      {% if due_schedules %}
+      {% if due_enriched %}
         <div class="alert-list">
-          {% for schedule in due_schedules %}
-          {% set overdue = schedule.next_due_at < now %}
-          <div class="alert-item {% if overdue %}overdue{% endif %}">
-            <div class="alert-name">{{ schedule.name }}</div>
-            <div class="alert-meta">{{ schedule.target_type }} · {{ schedule.description or "no description" }}</div>
-            <div class="alert-due">
-              {% if overdue %}
-                overdue since {{ schedule.next_due_at.strftime("%d %b") }}
-              {% else %}
-                due {{ schedule.next_due_at.strftime("%d %b") }}
-              {% endif %}
-            </div>
+          {% for item in due_enriched %}
+          {% set s = item.schedule %}
+          <div class="alert-item {% if item.days_overdue > 0 %}urgent{% endif %}">
+            <a href="/schedules/{{ s.id }}" style="text-decoration:none;">
+              <div class="alert-name">{{ s.name }}</div>
+              <div class="alert-meta">{{ s.target_type }} · {{ item.target_name }}</div>
+              <div class="alert-due">
+                {% if item.days_overdue > 0 %}
+                  {{ item.days_overdue }} day{{ 's' if item.days_overdue != 1 }} overdue
+                {% else %}
+                  due today
+                {% endif %}
+              </div>
+            </a>
+            <form method="post" action="/schedules/{{ s.id }}/complete" style="margin-top:6px;">
+              <input type="hidden" name="completed_at" value="{{ now.strftime('%Y-%m-%dT%H:%M') }}" />
+              <button type="submit" class="btn btn-primary" style="font-size:9px;padding:3px 10px;width:100%;">mark done</button>
+            </form>
           </div>
           {% endfor %}
         </div>

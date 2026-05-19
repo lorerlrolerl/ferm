@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}new schedule — ferm{% endblock %}
+{% block head %}
+<style>
+  .form-wrap { max-width: 600px; margin: 0 auto; }
+  .page-title { font-family: Georgia,serif; font-size:20px; font-style:italic; color:var(--accent); margin-bottom:24px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="form-wrap">
+  <div class="page-title">new schedule</div>
+  <form method="post" action="/schedules/new">
+    <div class="form-section">
+      <div class="form-section-title">Schedule</div>
+
+      <div class="field">
+        <label>Name *</label>
+        <input type="text" name="name" required autofocus placeholder="e.g. Feed sourdough, Calibrate pH meter" />
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <input type="text" name="description" placeholder="What needs to be done..." />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Attached to</label>
+          <select name="target_type" id="target-type" onchange="updateTargetList()" required>
+            <option value="">— select type —</option>
+            {% for t in target_types %}
+              <option value="{{ t }}" {% if prefill_type == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Target</label>
+          <!-- Ferments -->
+          <select name="target_id" id="target-ferment" style="display:none;">
+            <option value="">— select ferment —</option>
+            {% for f in ferments %}
+              <option value="{{ f.id }}" {% if prefill_type == 'ferment' and prefill_id == f.id %}selected{% endif %}>{{ f.name }}</option>
+            {% endfor %}
+          </select>
+          <!-- Batches -->
+          <select name="target_id" id="target-batch" style="display:none;">
+            <option value="">— select batch —</option>
+            {% for b in batches %}
+              <option value="{{ b.id }}" {% if prefill_type == 'batch' and prefill_id == b.id %}selected{% endif %}>{{ b.lot_code or 'Batch #' + b.id|string }}</option>
+            {% endfor %}
+          </select>
+          <!-- Containers -->
+          <select name="target_id" id="target-container" style="display:none;">
+            <option value="">— select container —</option>
+            {% for c in containers %}
+              <option value="{{ c.id }}" {% if prefill_type == 'container' and prefill_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+          <!-- Tools -->
+          <select name="target_id" id="target-tool" style="display:none;">
+            <option value="">— select tool —</option>
+            {% for t in tools %}
+              <option value="{{ t.id }}" {% if prefill_type == 'tool' and prefill_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+            {% endfor %}
+          </select>
+          <!-- Fallback -->
+          <select name="target_id" id="target-none">
+            <option value="">— select type first —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Repeat every (days)</label>
+          <input type="number" name="interval_days" step="0.5" min="0.5" placeholder="e.g. 7 (leave blank for one-off)" />
+          <div class="field-hint">Leave blank for a one-off reminder.</div>
+        </div>
+        <div class="field">
+          <label>First due date</label>
+          <input type="datetime-local" name="next_due_at" value="{{ today }}" />
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button type="submit" class="btn btn-primary">create schedule</button>
+      <a href="/schedules" class="btn btn-ghost">cancel</a>
+    </div>
+  </form>
+</div>
+<script>
+  function updateTargetList() {
+    const type = document.getElementById('target-type').value;
+    ['ferment','batch','container','tool','none'].forEach(t => {
+      const el = document.getElementById('target-' + t);
+      if (!el) return;
+      const active = t === (type || 'none');
+      el.style.display = active ? '' : 'none';
+      el.disabled = !active;  // only the visible one submits
+    });
+  }
+  // Init on load
+  updateTargetList();
+</script>
+{% endblock %}

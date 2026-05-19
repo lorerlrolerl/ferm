@@ -10,6 +10,7 @@ from app.database import get_db
 from app.models.ferment import Batch, Ferment
 from app.models.lookup import Status
 from app.models.schedule import Schedule, ScheduleEvent
+from app.models.tool import Tool
 from app.models.user import User
 from app.templates import templates
 
@@ -88,6 +89,28 @@ def dashboard(
         .all()
     )
 
+    # Resolve target names for due schedules
+    def _target_name(s):
+        try:
+            if s.target_type == "ferment":
+                obj = db.query(Ferment).filter_by(id=s.target_id).first()
+                return obj.name if obj else f"Ferment #{s.target_id}"
+            elif s.target_type == "batch":
+                obj = db.query(Batch).filter_by(id=s.target_id).first()
+                return obj.lot_code or f"Batch #{s.target_id}" if obj else f"Batch #{s.target_id}"
+            elif s.target_type == "tool":
+                obj = db.query(Tool).filter_by(id=s.target_id).first()
+                return obj.name if obj else f"Tool #{s.target_id}"
+        except Exception:
+            pass
+        return f"{s.target_type} #{s.target_id}"
+
+    due_enriched = [
+        {"schedule": s, "target_name": _target_name(s),
+         "days_overdue": (now - s.next_due_at).days}
+        for s in due_schedules
+    ]
+
     return templates.TemplateResponse(
         request,
         "dashboard.html",
@@ -99,6 +122,7 @@ def dashboard(
             "ready_count": ready_count,
             "ferment_data": ferment_data,
             "due_schedules": due_schedules,
+            "due_enriched": due_enriched,
             "now": now,
         },
     )

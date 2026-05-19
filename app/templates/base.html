@@ -131,6 +131,8 @@
       <a href="/ferments"    {% if request.url.path.startswith("/ferments") %}class="active"{% endif %}>Ferments</a>
       <a href="/ingredients" {% if request.url.path.startswith("/ingredients") %}class="active"{% endif %}>Ingredients</a>
       <a href="/additives"   {% if request.url.path.startswith("/additives") %}class="active"{% endif %}>Additives</a>
+      <a href="/schedules"   {% if request.url.path.startswith("/schedules") %}class="active"{% endif %}>Schedules</a>
+      <a href="/tools"       {% if request.url.path.startswith("/tools") %}class="active"{% endif %}>Tools</a>
       {% if current_user.role.value == 'admin' %}
         <a href="/docs" target="_blank" style="color:var(--text-3);">API</a>
       {% endif %}

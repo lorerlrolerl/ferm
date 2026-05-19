@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}new tool — ferm{% endblock %}
+{% block head %}<style>.form-wrap{max-width:540px;margin:0 auto;}.page-title{font-family:Georgia,serif;font-size:20px;font-style:italic;color:var(--accent);margin-bottom:24px;}</style>{% endblock %}
+{% block content %}
+<div class="form-wrap">
+  <div class="page-title">new tool</div>
+  <form method="post" action="/tools/new">
+    <div class="form-section">
+      <div class="form-section-title">Tool</div>
+      <div class="field">
+        <label>Name *</label>
+        <input type="text" name="name" required autofocus placeholder="e.g. pH Meter, Thermometer, Aerator" />
+        {% if errors.name %}<div class="field-error">{{ errors.name }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label>Type</label>
+        <input type="text" name="tool_type" placeholder="e.g. ph_meter, thermometer, cleaning" />
+        {% if errors.tool_type %}<div class="field-error">{{ errors.tool_type }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <input type="text" name="description" placeholder="Brand, model, serial number..." />
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Calibration notes, quirks, storage location..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button type="submit" class="btn btn-primary">create tool</button>
+      <a href="/tools" class="btn btn-ghost">cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}edit schedule — ferm{% endblock %}
+{% block head %}
+<style>
+  .form-wrap { max-width: 600px; margin: 0 auto; }
+  .page-title { font-family: Georgia,serif; font-size:20px; font-style:italic; color:var(--accent); margin-bottom:4px; }
+  .page-sub { font-size:11px; color:var(--text-3); margin-bottom:24px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="form-wrap">
+  <div class="page-title">edit schedule</div>
+  <div class="page-sub">{{ schedule.target_type }} · {{ target_name }}</div>
+  <form method="post" action="/schedules/{{ schedule.id }}/edit">
+    <div class="form-section">
+      <div class="form-section-title">Schedule</div>
+      <div class="field">
+        <label>Name *</label>
+        <input type="text" name="name" required value="{{ schedule.name }}" />
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <input type="text" name="description" value="{{ schedule.description or '' }}" />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Target type</label>
+          <select name="target_type">
+            {% for t in target_types %}
+              <option value="{{ t }}" {% if schedule.target_type == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Target ID</label>
+          <input type="number" name="target_id" value="{{ schedule.target_id }}" />
+          <div class="field-hint">Current: {{ target_name }}</div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Repeat every (days)</label>
+          <input type="number" name="interval_days" step="0.5" min="0.5" value="{{ schedule.interval_days or '' }}" placeholder="blank = one-off" />
+        </div>
+        <div class="field">
+          <label>Next due</label>
+          <input type="datetime-local" name="next_due_at"
+            value="{{ schedule.next_due_at.strftime('%Y-%m-%dT%H:%M') if schedule.next_due_at else '' }}" />
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-check">
+          <input type="checkbox" name="is_active" value="true" {% if schedule.is_active %}checked{% endif %} />
+          <span>Active</span>
+        </label>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button type="submit" class="btn btn-primary">save changes</button>
+      <a href="/schedules" class="btn btn-ghost">cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
