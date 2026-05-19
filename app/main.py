@@ -22,6 +22,8 @@ from app.routers import additives as additives_router
 from app.routers import logs as logs_router
 from app.routers import schedules as schedules_router
 from app.routers import tools as tools_router
+from app.routers import users as users_router
+from app.routers import users as users_router
 
 app.include_router(auth_router.router)
 app.include_router(dashboard_router.router)
@@ -32,6 +34,8 @@ app.include_router(additives_router.router)
 app.include_router(logs_router.router)
 app.include_router(schedules_router.router)
 app.include_router(tools_router.router)
+app.include_router(users_router.router)
+app.include_router(users_router.router)
 
 @app.get("/health")
 def health():

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ current_user.username }} — ferm{% endblock %}
+{% block head %}
+<style>
+  .form-wrap { max-width: 520px; margin: 0 auto; }
+  .profile-header { margin-bottom: 28px; }
+  .profile-username {
+    font-family: Georgia, serif; font-size: 22px;
+    font-style: italic; color: var(--text); margin-bottom: 6px;
+  }
+  .role-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 24px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .role-badge-lg {
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 4px 12px; border-radius: var(--radius); font-weight: 600;
+    white-space: nowrap; margin-top: 2px;
+  }
+  .role-admin  { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
+  .role-editor { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border); }
+  .role-viewer { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
+  .role-desc   { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+  .success-banner {
+    background: var(--green-bg); border: 1px solid var(--green-border);
+    border-radius: var(--radius); padding: 10px 14px; margin-bottom: 20px;
+    font-size: 11px; color: var(--green);
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="form-wrap">
+
+  <div class="profile-header">
+    <div class="profile-username">{{ current_user.username }}</div>
+    <div style="font-size:11px; color:var(--text-3);">{{ current_user.email }}</div>
+  </div>
+
+  <div class="role-card">
+    <span class="role-badge-lg role-{{ current_user.role.value }}">{{ current_user.role.value }}</span>
+    <div class="role-desc">{{ role_description }}</div>
+  </div>
+
+  {% if success %}
+    <div class="success-banner">✓ Password updated successfully.</div>
+  {% endif %}
+
+  <div class="section-label">Change password</div>
+
+  <form method="post" action="/users/me/password">
+    <div class="form-section">
+      <div class="field">
+        <label>Current password</label>
+        <input type="password" name="current_password" required autofocus />
+        {% if errors.current_password %}<div class="field-error">{{ errors.current_password }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label>New password</label>
+        <input type="password" name="new_password" required placeholder="minimum 8 characters" />
+        {% if errors.new_password %}<div class="field-error">{{ errors.new_password }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label>Confirm new password</label>
+        <input type="password" name="confirm_password" required />
+        {% if errors.confirm_password %}<div class="field-error">{{ errors.confirm_password }}</div>{% endif %}
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <button type="submit" class="btn btn-primary">update password</button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

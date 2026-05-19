@@ -134,12 +134,12 @@
       <a href="/schedules"   {% if request.url.path.startswith("/schedules") %}class="active"{% endif %}>Schedules</a>
       <a href="/tools"       {% if request.url.path.startswith("/tools") %}class="active"{% endif %}>Tools</a>
       {% if current_user.role.value == 'admin' %}
+        <a href="/users"  {% if request.url.path.startswith("/users") %}class="active"{% endif %}>Users</a>
         <a href="/docs" target="_blank" style="color:var(--text-3);">API</a>
       {% endif %}
     </div>
     <div class="nav-user">
-      <span class="nav-username">{{ current_user.username }}</span>
-      <span class="nav-role">{{ current_user.role.value }}</span>
+      <a href="/users/me" class="nav-username" style="text-decoration:none;">{{ current_user.username }}</a>
       <a href="/logout" class="nav-logout">sign out</a>
     </div>
     {% else %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}users — ferm{% endblock %}
+{% block head %}
+<style>
+  .wrap { max-width: 900px; margin: 0 auto; }
+  .role-badge {
+    font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 3px; font-weight: 500;
+  }
+  .role-admin  { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
+  .role-editor { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border); }
+  .role-viewer { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
+  .inactive-row td { opacity: 0.5; }
+  .error-banner { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 11px; color: var(--red); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="page-header">
+    <div>
+      <div class="page-title">users</div>
+      <div class="page-sub">{{ users | length }} accounts</div>
+    </div>
+    <a href="/users/new" class="btn btn-primary">+ new user</a>
+  </div>
+
+  {% if request.query_params.get('error') == 'self' %}
+    <div class="error-banner">You cannot deactivate or delete your own account.</div>
+  {% elif request.query_params.get('error') == 'has_content' %}
+    <div class="error-banner">Cannot delete — this user has created ferments or log entries. Deactivate instead.</div>
+  {% endif %}
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr class="{{ 'inactive-row' if not u.is_active }}">
+        <td>
+          <div class="td-name">
+            <a href="/users/{{ u.id }}">{{ u.username }}</a>
+          </div>
+          {% if u.id == current_user.id %}
+            <div class="td-sub">you</div>
+          {% endif %}
+        </td>
+        <td class="td-sub">{{ u.email }}</td>
+        <td><span class="role-badge role-{{ u.role.value }}">{{ u.role.value }}</span></td>
+        <td>
+          {% if u.is_active %}
+            <span style="font-size:10px; color:var(--green);">active</span>
+          {% else %}
+            <span style="font-size:10px; color:var(--text-3);">inactive</span>
+          {% endif %}
+        </td>
+        <td class="td-sub">{{ u.created_at.strftime("%d %b %Y") }}</td>
+        <td style="text-align:right; white-space:nowrap;">
+          <a href="/users/{{ u.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>
+          {% if u.id != current_user.id %}
+            {% if u.is_active %}
+              <form method="post" action="/users/{{ u.id }}/deactivate" style="display:inline;"
+                onsubmit="return confirm('Deactivate {{ u.username }}? They will not be able to log in.')">
+                <button type="submit" class="btn btn-ghost btn-sm" style="margin-right:4px;">deactivate</button>
+              </form>
+            {% endif %}
+            <form method="post" action="/users/{{ u.id }}/delete" style="display:inline;"
+              onsubmit="return confirm('Permanently delete {{ u.username }}? Only possible if they have no content.')">
+              <button type="submit" class="btn btn-danger">delete</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
