@@ -134,12 +134,20 @@
       <a href="/schedules"   {% if request.url.path.startswith("/schedules") %}class="active"{% endif %}>Schedules</a>
       <a href="/tools"       {% if request.url.path.startswith("/tools") %}class="active"{% endif %}>Tools</a>
       {% if current_user.role.value == 'admin' %}
-        <a href="/users"  {% if request.url.path.startswith("/users") %}class="active"{% endif %}>Users</a>
+        <a href="/users"    {% if request.url.path.startswith("/users") %}class="active"{% endif %}>Users</a>
+        <a href="/settings" {% if request.url.path.startswith("/settings") %}class="active"{% endif %}>Settings</a>
         <a href="/docs" target="_blank" style="color:var(--text-3);">API</a>
       {% endif %}
     </div>
     <div class="nav-user">
-      <a href="/users/me" class="nav-username" style="text-decoration:none;">{{ current_user.username }}</a>
+      <a href="/users/profile" style="text-decoration:none;">
+        <span class="nav-username">{{ current_user.username }}</span>
+      </a>
+      <span class="nav-role">{{ current_user.role.value }}</span>
+      {% if current_user.role.value == 'admin' %}
+        <a href="/users" style="font-size:10px;color:var(--text-3);letter-spacing:0.05em;text-transform:uppercase;padding:4px 8px;border-radius:3px;transition:color 0.12s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-3)'">users</a>
+      {% endif %}
+      <a href="/users/me/password" class="nav-logout" style="margin-right:4px;">password</a>
       <a href="/logout" class="nav-logout">sign out</a>
     </div>
     {% else %}
