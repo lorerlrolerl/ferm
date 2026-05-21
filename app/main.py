@@ -1,17 +1,21 @@
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
 from app.config import settings
 from app.database import create_tables
 from app.templates import templates  # noqa: F401
 import app.models  # noqa: F401
+from contextlib import asynccontextmanager
 
-app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
+@asynccontextmanager
+async def lifespan(app):
+    create_tables()
+    yield
+
+app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
-@app.on_event("startup")
-def on_startup():
-    create_tables()
 
 from app.routers import auth as auth_router
 from app.routers import dashboard as dashboard_router
