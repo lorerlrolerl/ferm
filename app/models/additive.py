@@ -1,41 +1,37 @@
-from datetime import datetime
-from enum import Enum as PyEnum
-
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, func
+from typing import Optional, TYPE_CHECKING
+from sqlalchemy import Integer, String, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from app.database import Base
 
+if TYPE_CHECKING:
+    from app.models.ferment import BatchAdditive
 
-class AdditiveType(PyEnum):
-    salt = "salt"
-    backslopp = "backslopp"
-    culture = "culture"
-    sugar = "sugar"
-    spice = "spice"
-    other = "other"
+
+class AdditiveType(Base):
+    __tablename__ = "additive_types"
+
+    id:          Mapped[int]          = mapped_column(Integer, primary_key=True)
+    name:        Mapped[str]          = mapped_column(String(64), unique=True, nullable=False)
+    description: Mapped[Optional[str]]= mapped_column(Text, nullable=True)
+
+    additives: Mapped[list["Additive"]] = relationship(back_populates="type_obj")
 
 
 class Additive(Base):
-    """
-    Non-ingredient additions: salts, backslops, cultures, etc.
-    Tracked separately from ingredients as they play a different role.
-    Protected from deletion if used in any batch.
-    """
     __tablename__ = "additives"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    additive_type: Mapped[AdditiveType] = mapped_column(Enum(AdditiveType), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+    id:               Mapped[int]           = mapped_column(Integer, primary_key=True)
+    name:             Mapped[str]           = mapped_column(String(128), nullable=False)
+    additive_type_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("additive_types.id"), nullable=True)
+    description:      Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    batch_additives: Mapped[list["BatchAdditive"]] = relationship(back_populates="additive")
+    type_obj: Mapped[Optional[AdditiveType]] = relationship(back_populates="additives")
+
+    # Keep old column for backwards compat during transition
+    # additive_type: legacy enum string — still in db but no longer used in code
 
     @property
-    def is_in_use(self) -> bool:
-        return len(self.batch_additives) > 0
+    def additive_type_name(self) -> str:
+        return self.type_obj.name if self.type_obj else "other"
 
-    def __repr__(self) -> str:
-        return f"<Additive {self.name} ({self.additive_type.value})>"
+    batch_additives: Mapped[list["BatchAdditive"]] = relationship(back_populates="additive")

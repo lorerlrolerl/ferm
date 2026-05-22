@@ -1,25 +1,70 @@
-/* ── Buttons ───────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   ferm — main.css
+   All shared component styles. Templates should have zero or
+   minimal inline <style> blocks — only for truly page-specific
+   layout (e.g. dashboard grid, settings tab strip).
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Layout ─────────────────────────────────────────────────── */
+.wrap       { max-width: 960px;  margin: 0 auto; }
+.wrap-sm    { max-width: 600px;  margin: 0 auto; }
+.wrap-lg    { max-width: 1100px; margin: 0 auto; }
+.form-wrap  { max-width: 560px;  margin: 0 auto; }
+
+/* ── Page header ─────────────────────────────────────────────── */
+.page-header {
+  display: flex; align-items: flex-end;
+  justify-content: space-between; margin-bottom: 20px;
+}
+.page-title {
+  font-family: Georgia, serif; font-size: 20px;
+  font-style: italic; color: var(--accent);
+}
+.page-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+/* ── Breadcrumb ──────────────────────────────────────────────── */
+.breadcrumb {
+  font-size: 11px; color: var(--text-3); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 6px;
+}
+.breadcrumb a { color: var(--text-2); text-decoration: none; }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb-sep { color: var(--border); }
+
+/* ── Section label ───────────────────────────────────────────── */
+.section-label {
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-2); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border-soft);
+}
+.section-count { color: var(--text-3); }
+
+/* ── Buttons ─────────────────────────────────────────────────── */
 .btn {
   display: inline-block; font-size: 10px; letter-spacing: 0.08em;
   text-transform: uppercase; padding: 7px 16px; border-radius: var(--radius);
-  cursor: pointer; transition: opacity 0.12s, background 0.12s;
+  cursor: pointer; transition: opacity 0.12s, background 0.12s, color 0.12s;
   text-decoration: none; font-family: inherit; border: none; white-space: nowrap;
 }
 .btn-primary { background: var(--accent); color: var(--bg); font-weight: 600; }
 .btn-primary:hover { opacity: 0.88; }
-.btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
-.btn-ghost:hover { color: var(--text); border-color: var(--text-3); }
-.btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red-border); font-size: 9px; padding: 3px 9px; }
-.btn-danger:hover { background: var(--red-bg); }
-.btn-sm { font-size: 9px; padding: 4px 12px; }
-.btn-toggle {
-  background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border);
-  font-size: 9px; padding: 4px 10px; cursor: pointer; border-radius: var(--radius);
-  font-family: inherit; letter-spacing: 0.06em; text-transform: uppercase;
+.btn-ghost {
+  background: transparent; color: var(--text-2);
+  border: 1px solid var(--border);
 }
-.btn-toggle:hover { color: var(--accent); border-color: var(--accent-dim); }
+.btn-ghost:hover { color: var(--text); border-color: var(--text-3); }
+.btn-danger {
+  background: transparent; color: var(--red);
+  border: 1px solid var(--red-border); font-size: 9px; padding: 3px 9px;
+}
+.btn-danger:hover { background: var(--red-bg); }
+.btn-sm   { font-size: 9px; padding: 4px 12px; }
+.btn-icon { padding: 4px 8px; font-size: 12px; }
 
-/* ── Badges ────────────────────────────────────────────────────── */
+/* ── Badges ──────────────────────────────────────────────────── */
 .badge {
   font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
   padding: 2px 8px; border-radius: 3px; font-weight: 500; display: inline-block;
@@ -34,35 +79,24 @@
 .badge-stage  { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border); }
 .badge-ongoing{ background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border); font-style: italic; }
 
-/* ── Forms ─────────────────────────────────────────────────────── */
-.field { margin-bottom: 14px; }
-.field:last-child { margin-bottom: 0; }
-.field label {
-  display: block; font-size: 10px; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-3); margin-bottom: 5px;
+/* Role badges */
+.role-badge {
+  font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 3px; font-weight: 500;
 }
-.field input, .field select, .field textarea {
-  width: 100%; background: var(--surface-2); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 8px 11px; font-size: 13px;
-  font-family: inherit; color: var(--text); outline: none; transition: border-color 0.12s;
-}
-.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent-dim); }
-.field select option { background: var(--surface); }
-.field textarea { resize: vertical; min-height: 80px; }
-.field input.error, .field select.error { border-color: var(--red-border); }
-.field-hint  { font-size: 10px; color: var(--text-3); margin-top: 4px; }
-.field-error { font-size: 10px; color: var(--red); margin-top: 4px; }
-.field-note  {
-  font-size: 10px; color: var(--accent); background: var(--accent-bg);
-  border: 1px solid var(--accent-dim); border-radius: var(--radius);
-  padding: 6px 10px; margin-bottom: 14px;
-}
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.field-check { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-.field-check input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
-.field-check span { font-size: 12px; color: var(--text-2); }
+.role-admin  { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
+.role-editor { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border); }
+.role-viewer { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
 
-/* ── Form sections ─────────────────────────────────────────────── */
+/* ── Lot code ────────────────────────────────────────────────── */
+.lot-code {
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 13px; color: var(--accent); letter-spacing: 0.05em;
+  background: var(--accent-bg); border: 1px solid var(--accent-dim);
+  border-radius: var(--radius); padding: 3px 10px; display: inline-block;
+}
+
+/* ── Forms ───────────────────────────────────────────────────── */
 .form-section {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 12px;
@@ -72,37 +106,76 @@
   color: var(--text-3); margin-bottom: 16px; padding-bottom: 10px;
   border-bottom: 1px solid var(--border-soft);
 }
+.form-actions { display: flex; gap: 10px; margin-top: 16px; }
 
-/* ── Page headers ──────────────────────────────────────────────── */
-.page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
-.page-title  { font-family: Georgia,serif; font-size: 20px; font-style: italic; color: var(--accent); }
-.page-sub    { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-
-/* ── Section labels ────────────────────────────────────────────── */
-.section-label {
-  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--text-3); margin-bottom: 12px;
-  display: flex; align-items: center; gap: 10px;
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block; font-size: 10px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-3); margin-bottom: 5px;
 }
-.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-soft); }
+.field input, .field select, .field textarea {
+  width: 100%; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 11px; font-size: 13px;
+  font-family: inherit; color: var(--text); outline: none;
+  transition: border-color 0.12s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent-dim);
+}
+.field select option { background: var(--surface); }
+.field textarea { resize: vertical; min-height: 80px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.field-hint  { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+.field-error { font-size: 10px; color: var(--red); margin-top: 4px; }
+.field-note  {
+  font-size: 10px; color: var(--accent); background: var(--accent-bg);
+  border: 1px solid var(--accent-dim); border-radius: var(--radius);
+  padding: 6px 10px; margin-bottom: 14px;
+}
+.field-check { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.field-check input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); }
+.field-check span { font-size: 12px; color: var(--text-2); }
 
-/* ── Tables ────────────────────────────────────────────────────── */
+/* Tag / descriptor pill grid */
+.tag-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.tag-option { display: none; }
+.tag-label {
+  font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 3px; cursor: pointer;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-3); user-select: none; transition: all 0.12s;
+}
+.tag-option:checked + .tag-label {
+  background: var(--accent-bg); color: var(--accent); border-color: var(--accent-dim);
+}
+.tag-label:hover { border-color: var(--text-3); color: var(--text-2); }
+
+/* ── Tables ──────────────────────────────────────────────────── */
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {
   font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--text-3); text-align: left; padding: 8px 12px;
   border-bottom: 1px solid var(--border); font-weight: 400;
 }
-.data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+.data-table td {
+  padding: 10px 12px; border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+}
 .data-table tr:last-child td { border-bottom: none; }
 .data-table tr:hover td { background: var(--surface); }
+
+/* Table cell helpers */
 .td-name  { font-size: 13px; color: var(--text); }
+.td-name a { color: inherit; text-decoration: none; }
 .td-name a:hover { color: var(--accent); }
 .td-sub   { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+.td-desc  { font-size: 10px; color: var(--text-3); }
 .td-mono  { font-family: monospace; color: var(--accent); }
-.td-muted { color: var(--text-3); }
+.td-muted { color: var(--text-3); font-size: 12px; }
 
-/* ── Filters ───────────────────────────────────────────────────── */
+/* ── Filters ─────────────────────────────────────────────────── */
 .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
 .filter-input, .filter-select {
   background: var(--surface); border: 1px solid var(--border);
@@ -119,34 +192,33 @@
 }
 .btn-filter:hover { color: var(--accent); }
 
-/* ── Empty states ──────────────────────────────────────────────── */
+/* ── Empty states ────────────────────────────────────────────── */
 .empty-state { text-align: center; padding: 60px 24px; }
-.empty-state-title { font-family: Georgia,serif; font-size: 16px; font-style: italic; color: var(--text-3); margin-bottom: 8px; }
-.empty-state-sub   { font-size: 11px; color: var(--text-3); margin-bottom: 20px; }
-.empty-section     { font-size: 11px; color: var(--text-3); font-style: italic; padding: 8px 0; }
+.empty-state-title {
+  font-family: Georgia, serif; font-size: 16px; font-style: italic;
+  color: var(--text-3); margin-bottom: 8px;
+}
+.empty-state-sub  { font-size: 11px; color: var(--text-3); margin-bottom: 20px; }
+.empty-section    { font-size: 11px; color: var(--text-3); font-style: italic; padding: 8px 0; }
 
-/* ── Error banner ──────────────────────────────────────────────── */
+/* ── Banners ─────────────────────────────────────────────────── */
 .error-banner {
   background: var(--red-bg); border: 1px solid var(--red-border);
   border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px;
   font-size: 11px; color: var(--red);
 }
-
-/* ── Lot code ──────────────────────────────────────────────────── */
-.lot-code {
-  font-family: 'Cascadia Code','Consolas',monospace;
-  font-size: 14px; color: var(--accent); letter-spacing: 0.06em;
+.success-banner {
+  background: var(--green-bg); border: 1px solid var(--green-border);
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px;
+  font-size: 11px; color: var(--green);
+}
+.info-banner {
   background: var(--accent-bg); border: 1px solid var(--accent-dim);
-  border-radius: var(--radius); padding: 3px 12px; display: inline-block;
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px;
+  font-size: 11px; color: var(--accent);
 }
 
-/* ── Breadcrumb ────────────────────────────────────────────────── */
-.breadcrumb { font-size: 11px; color: var(--text-3); margin-bottom: 20px; display: flex; align-items: center; gap: 6px; }
-.breadcrumb a { color: var(--text-2); }
-.breadcrumb a:hover { color: var(--accent); }
-.breadcrumb-sep { color: var(--border); }
-
-/* ── Descriptor pill selector ──────────────────────────────────── */
+/* ── Descriptor pill selector ────────────────────────────────── */
 .descriptor-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
 .descriptor-opt  { display: none; }
 .descriptor-label {
@@ -159,3 +231,15 @@
   background: var(--accent-bg); color: var(--accent); border-color: var(--accent-dim);
 }
 .descriptor-label:hover { border-color: var(--text-3); color: var(--text-2); }
+
+/* ── Stat chips ──────────────────────────────────────────────── */
+.stat-row { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.stat-chip {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 14px;
+  font-size: 11px; color: var(--text-2);
+}
+.stat-chip strong {
+  font-family: Georgia, serif; font-size: 18px;
+  color: var(--text); display: block; margin-bottom: 1px;
+}

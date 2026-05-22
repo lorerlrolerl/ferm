@@ -98,6 +98,70 @@ def users_create(
 
 # ── Edit (admin) ───────────────────────────────────────────────────────────
 
+# ── Profile (own page) ────────────────────────────────────────────────────
+
+@router.get("/me", response_class=HTMLResponse)
+def profile_page(
+    request: Request,
+    current_user: User = Depends(require_user),
+):
+    role_descriptions = {
+        "admin":  "Full access. Can manage users, lookup tables, create and delete anything. Cannot be restricted.",
+        "editor": "Can create and edit ferments, batches, ingredients, additives, log entries, and schedules. Cannot manage users or lookup tables.",
+        "viewer": "Read-only access. Can view all ferments and their logs but cannot create or change anything.",
+    }
+    return templates.TemplateResponse(request, "users/profile.html", {
+        "current_user": current_user,
+        "role_description": role_descriptions.get(current_user.role.value, ""),
+        "errors": {},
+        "success": False,
+    })
+
+
+# ── Change own password ────────────────────────────────────────────────────
+
+@router.get("/me/password", response_class=HTMLResponse)
+def password_change_page(request: Request, current_user: User = Depends(require_user)):
+    return RedirectResponse("/users/me", status_code=status.HTTP_302_FOUND)
+
+
+@router.post("/me/password")
+def password_change(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+    current_password: str = Form(...),
+    new_password: str = Form(...),
+    confirm_password: str = Form(...),
+):
+    errors = {}
+    if not verify_password(current_password, current_user.hashed_password):
+        errors["current_password"] = "Current password is incorrect."
+    if len(new_password) < 8:
+        errors["new_password"] = "New password must be at least 8 characters."
+    if new_password != confirm_password:
+        errors["confirm_password"] = "Passwords do not match."
+
+    if errors:
+        return templates.TemplateResponse(request, "users/password.html", {
+            "current_user": current_user, "errors": errors, "success": False,
+        }, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    user = db.query(User).filter_by(id=current_user.id).first()
+    user.hashed_password = hash_password(new_password)
+    db.commit()
+    return templates.TemplateResponse(request, "users/profile.html", {
+        "current_user": current_user,
+        "role_description": {
+            "admin":  "Full access. Can manage users, lookup tables, create and delete anything.",
+            "editor": "Can create and edit ferments, batches, ingredients, additives, log entries, and schedules.",
+            "viewer": "Read-only access. Cannot create or change anything.",
+        }.get(current_user.role.value, ""),
+        "errors": {}, "success": True,
+    })
+
+
+
 @router.get("/{user_id}", response_class=HTMLResponse)
 def users_detail(
     user_id: int,
@@ -246,66 +310,3 @@ def users_delete(
     db.delete(user)
     db.commit()
     return RedirectResponse("/users", status_code=status.HTTP_303_SEE_OTHER)
-
-
-# ── Profile (own page) ────────────────────────────────────────────────────
-
-@router.get("/me", response_class=HTMLResponse)
-def profile_page(
-    request: Request,
-    current_user: User = Depends(require_user),
-):
-    role_descriptions = {
-        "admin":  "Full access. Can manage users, lookup tables, create and delete anything. Cannot be restricted.",
-        "editor": "Can create and edit ferments, batches, ingredients, additives, log entries, and schedules. Cannot manage users or lookup tables.",
-        "viewer": "Read-only access. Can view all ferments and their logs but cannot create or change anything.",
-    }
-    return templates.TemplateResponse(request, "users/profile.html", {
-        "current_user": current_user,
-        "role_description": role_descriptions.get(current_user.role.value, ""),
-        "errors": {},
-        "success": False,
-    })
-
-
-# ── Change own password ────────────────────────────────────────────────────
-
-@router.get("/me/password", response_class=HTMLResponse)
-def password_change_page(request: Request, current_user: User = Depends(require_user)):
-    return RedirectResponse("/users/me", status_code=status.HTTP_302_FOUND)
-
-
-@router.post("/me/password")
-def password_change(
-    request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_user),
-    current_password: str = Form(...),
-    new_password: str = Form(...),
-    confirm_password: str = Form(...),
-):
-    errors = {}
-    if not verify_password(current_password, current_user.hashed_password):
-        errors["current_password"] = "Current password is incorrect."
-    if len(new_password) < 8:
-        errors["new_password"] = "New password must be at least 8 characters."
-    if new_password != confirm_password:
-        errors["confirm_password"] = "Passwords do not match."
-
-    if errors:
-        return templates.TemplateResponse(request, "users/password.html", {
-            "current_user": current_user, "errors": errors, "success": False,
-        }, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
-
-    user = db.query(User).filter_by(id=current_user.id).first()
-    user.hashed_password = hash_password(new_password)
-    db.commit()
-    return templates.TemplateResponse(request, "users/profile.html", {
-        "current_user": current_user,
-        "role_description": {
-            "admin":  "Full access. Can manage users, lookup tables, create and delete anything.",
-            "editor": "Can create and edit ferments, batches, ingredients, additives, log entries, and schedules.",
-            "viewer": "Read-only access. Cannot create or change anything.",
-        }.get(current_user.role.value, ""),
-        "errors": {}, "success": True,
-    })

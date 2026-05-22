@@ -1,14 +1,19 @@
-{% extends "base.html" %}
-{% block title %}schedules — ferm{% endblock %}
+{% extends "base_list.html" %}
+{% set new_url = "/schedules/new" %}
+{% set new_label = "new schedule" %}
+
+{% block page_title %}schedules{% endblock %}
+{% block page_sub %}{{ enriched | length }} shown{% endblock %}
+
 {% block head %}
 <style>
-  .wrap { max-width: 1000px; margin: 0 auto; }
-  .overdue-row td { background: var(--red-bg) !important; }
-  .due-today-row td { background: var(--accent-bg) !important; }
-  .days-overdue { color: var(--red); font-weight: 600; }
-  .days-soon    { color: var(--accent); }
-  .days-ok      { color: var(--text-3); }
-  .target-type-badge {
+  .wrap { max-width: 1000px; }
+  .overdue-row td  { background: var(--red-bg) !important; }
+  .due-today-row td{ background: var(--accent-bg) !important; }
+  .days-overdue { color: var(--red); font-weight: 600; font-size: 10px; }
+  .days-soon    { color: var(--accent); font-size: 10px; }
+  .days-ok      { color: var(--text-3); font-size: 10px; }
+  .target-badge {
     font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
     padding: 2px 7px; border-radius: 3px;
   }
@@ -22,133 +27,98 @@
     border-radius: var(--radius); padding: 4px 8px; font-size: 11px;
     font-family: inherit; color: var(--text); outline: none;
   }
-  .interval-badge {
-    font-size: 10px; color: var(--text-3);
-    font-family: monospace;
-  }
+  .interval-badge { font-size: 10px; color: var(--text-3); font-family: monospace; }
 </style>
 {% endblock %}
-{% block content %}
-<div class="wrap">
-  <div class="page-header">
-    <div>
-      <div class="page-title">schedules</div>
-      <div class="page-sub">{{ enriched | length }} shown</div>
-    </div>
-    {% if current_user.role.value in ['admin','editor'] %}
-      <a href="/schedules/new" class="btn btn-primary">+ new schedule</a>
-    {% endif %}
-  </div>
 
-  <!-- Filters -->
-  <form method="get" action="/schedules" class="filters">
-    <select name="target_type" class="filter-select">
-      <option value="">all types</option>
-      {% for t in target_types %}
-        <option value="{{ t }}" {% if filters.target_type == t %}selected{% endif %}>{{ t }}</option>
-      {% endfor %}
-    </select>
-    <label style="font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;">
-      <input type="checkbox" name="show_inactive" value="true" {% if filters.show_inactive %}checked{% endif %} style="accent-color:var(--accent);" />
-      show inactive
-    </label>
-    <button type="submit" class="btn-filter">filter</button>
-    {% if filters.target_type or filters.show_inactive %}
-      <a href="/schedules" class="btn-filter">clear</a>
-    {% endif %}
-  </form>
+{% block filters %}
+<form method="get" action="/schedules" class="filters">
+  <select name="target_type" class="filter-select">
+    <option value="">all types</option>
+    {% for t in target_types %}
+      <option value="{{ t }}" {% if filters.target_type == t %}selected{% endif %}>{{ t }}</option>
+    {% endfor %}
+  </select>
+  <label style="font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;">
+    <input type="checkbox" name="show_inactive" value="true" {% if filters.show_inactive %}checked{% endif %} style="accent-color:var(--accent);" />
+    show inactive
+  </label>
+  <button type="submit" class="btn-filter">filter</button>
+  {% if filters.target_type or filters.show_inactive %}<a href="/schedules" class="btn-filter">clear</a>{% endif %}
+</form>
+{% endblock %}
 
-  {% if enriched %}
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Schedule</th>
-        <th>Attached to</th>
-        <th>Interval</th>
-        <th>Next due</th>
-        <th>Status</th>
-        {% if current_user.role.value in ['admin','editor'] %}<th>Complete</th><th></th>{% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in enriched %}
-      {% set s = item.schedule %}
-      {% set overdue = item.is_overdue and s.is_active %}
-      {% set due_today = item.days_until is not none and item.days_until == 0 %}
-      <tr class="{{ 'overdue-row' if overdue else ('due-today-row' if due_today else '') }}">
-        <td>
-          <div class="td-name"><a href="/schedules/{{ s.id }}">{{ s.name }}</a></div>
-          {% if s.description %}<div class="td-sub">{{ s.description }}</div>{% endif %}
-        </td>
-        <td>
-          <span class="target-type-badge tt-{{ s.target_type }}">{{ s.target_type }}</span>
-          <div class="td-sub" style="margin-top:3px;">{{ item.target_name }}</div>
-        </td>
-        <td>
-          {% if s.interval_days %}
-            <span class="interval-badge">every {{ s.interval_days | int }} day{{ 's' if s.interval_days != 1 }}</span>
-          {% else %}
-            <span class="td-sub">one-off</span>
-          {% endif %}
-        </td>
-        <td>
-          {% if s.next_due_at %}
-            <div>{{ s.next_due_at.strftime("%d %b %Y") }}</div>
-            <div class="{{ 'days-overdue' if overdue else ('days-soon' if item.days_until <= 2 else 'days-ok') }}">
-              {% if overdue %}
-                {{ (now - s.next_due_at).days }} day{{ 's' if (now - s.next_due_at).days != 1 }} overdue
-              {% elif item.days_until == 0 %}
-                today
-              {% elif item.days_until == 1 %}
-                tomorrow
-              {% else %}
-                in {{ item.days_until }} days
-              {% endif %}
-            </div>
-          {% else %}
-            <span class="td-sub">—</span>
-          {% endif %}
-        </td>
-        <td>
-          {% if not s.is_active %}
-            <span class="td-sub">inactive</span>
-          {% elif overdue %}
-            <span style="color:var(--red);font-size:10px;">overdue</span>
-          {% elif due_today %}
-            <span style="color:var(--accent);font-size:10px;">due today</span>
-          {% else %}
-            <span style="color:var(--green);font-size:10px;">on track</span>
-          {% endif %}
-        </td>
-        {% if current_user.role.value in ['admin','editor'] %}
-        <td>
-          {% if s.is_active %}
-          <form method="post" action="/schedules/{{ s.id }}/complete" class="complete-form">
-            <input type="datetime-local" name="completed_at" value="{{ now.strftime('%Y-%m-%dT%H:%M') }}" />
-            <button type="submit" class="btn btn-primary btn-sm">done</button>
-          </form>
-          {% endif %}
-        </td>
-        <td style="text-align:right; white-space:nowrap;">
-          <a href="/schedules/{{ s.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>
-          <form method="post" action="/schedules/{{ s.id }}/delete" style="display:inline;"
-            onsubmit="return confirm('Delete this schedule?')">
-            <button type="submit" class="btn btn-danger">×</button>
-          </form>
-        </td>
+{% block list_content %}
+{% if enriched %}
+<table class="data-table">
+  <thead>
+    <tr><th>Schedule</th><th>Attached to</th><th>Interval</th><th>Next due</th><th>Status</th>
+    {% if current_user.role.value in ['admin','editor'] %}<th>Complete</th><th></th>{% endif %}</tr>
+  </thead>
+  <tbody>
+    {% for item in enriched %}
+    {% set s = item.schedule %}
+    {% set overdue = item.is_overdue and s.is_active %}
+    {% set due_today = item.days_until is not none and item.days_until == 0 %}
+    <tr class="{{ 'overdue-row' if overdue else ('due-today-row' if due_today else '') }}">
+      <td>
+        <div class="td-name"><a href="/schedules/{{ s.id }}">{{ s.name }}</a></div>
+        {% if s.description %}<div class="td-sub">{{ s.description }}</div>{% endif %}
+      </td>
+      <td>
+        <span class="target-badge tt-{{ s.target_type }}">{{ s.target_type }}</span>
+        <div class="td-sub" style="margin-top:3px;">{{ item.target_name }}</div>
+      </td>
+      <td>
+        {% if s.interval_days %}
+          <span class="interval-badge">every {{ s.interval_days | int }} day{{ 's' if s.interval_days != 1 }}</span>
+        {% else %}<span class="td-muted">one-off</span>{% endif %}
+      </td>
+      <td>
+        {% if s.next_due_at %}
+          <div style="font-size:12px;">{{ s.next_due_at.strftime("%d %b %Y") }}</div>
+          <div class="{{ 'days-overdue' if overdue else ('days-soon' if item.days_until <= 2 else 'days-ok') }}">
+            {% if overdue %}{{ (now - s.next_due_at).days }} day{{ 's' if (now - s.next_due_at).days != 1 }} overdue
+            {% elif item.days_until == 0 %}today
+            {% elif item.days_until == 1 %}tomorrow
+            {% else %}in {{ item.days_until }} days{% endif %}
+          </div>
+        {% else %}<span class="td-muted">—</span>{% endif %}
+      </td>
+      <td>
+        {% if not s.is_active %}<span class="td-muted">inactive</span>
+        {% elif overdue %}<span style="color:var(--red);font-size:10px;">overdue</span>
+        {% elif due_today %}<span style="color:var(--accent);font-size:10px;">due today</span>
+        {% else %}<span style="color:var(--green);font-size:10px;">on track</span>{% endif %}
+      </td>
+      {% if current_user.role.value in ['admin','editor'] %}
+      <td>
+        {% if s.is_active %}
+        <form method="post" action="/schedules/{{ s.id }}/complete" class="complete-form">
+          <input type="datetime-local" name="completed_at" value="{{ now.strftime('%Y-%m-%dT%H:%M') }}" />
+          <button type="submit" class="btn btn-primary btn-sm">done</button>
+        </form>
         {% endif %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty-state">
-    <div class="empty-state-title">no schedules yet.</div>
-    <div class="empty-state-sub">add feeding schedules, maintenance reminders, and tool calibrations.</div>
-    {% if current_user.role.value in ['admin','editor'] %}
-      <a href="/schedules/new" class="btn btn-primary">+ new schedule</a>
-    {% endif %}
-  </div>
+      </td>
+      <td style="text-align:right;white-space:nowrap;">
+        <a href="/schedules/{{ s.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>
+        <form method="post" action="/schedules/{{ s.id }}/delete" style="display:inline;"
+          onsubmit="return confirm('Delete this schedule?')">
+          <button type="submit" class="btn btn-danger">×</button>
+        </form>
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+  <div class="empty-state-title">no schedules yet.</div>
+  <div class="empty-state-sub">add feeding schedules, maintenance reminders, and tool calibrations.</div>
+  {% if current_user.role.value in ['admin','editor'] %}
+    <a href="/schedules/new" class="btn btn-primary">+ new schedule</a>
   {% endif %}
 </div>
+{% endif %}
 {% endblock %}

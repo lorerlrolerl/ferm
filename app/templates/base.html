@@ -18,8 +18,8 @@
       --border-soft: #2d2d30;
 
       --text:        #d4d4d4;
-      --text-2:      #9d9d9d;
-      --text-3:      #6a6a6a;
+      --text-2:      #b0b0b0;
+      --text-3:      #888888;
 
       --accent:      #d7ba7d;
       --accent-bg:   #2a2418;
@@ -118,6 +118,23 @@
   </style>
 
   <link rel="stylesheet" href="/static/css/main.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <style>
+    .flatpickr-input { background: var(--surface-2) !important; border: 1px solid var(--border) !important; border-radius: var(--radius) !important; color: var(--text) !important; font-family: inherit !important; font-size: 13px !important; padding: 8px 11px !important; }
+    .flatpickr-input:focus { border-color: var(--accent-dim) !important; outline: none !important; }
+    .flatpickr-calendar { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 8px 24px rgba(0,0,0,0.4); font-family: inherit; }
+    .flatpickr-day { color: var(--text-2); border-radius: var(--radius); }
+    .flatpickr-day:hover, .flatpickr-day.prevMonthDay:hover, .flatpickr-day.nextMonthDay:hover { background: var(--surface-3); border-color: var(--border); color: var(--text); }
+    .flatpickr-day.selected, .flatpickr-day.selected:hover { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .flatpickr-day.today { border-color: var(--accent-dim); }
+    .flatpickr-day.disabled, .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: var(--text-3); }
+    .flatpickr-months .flatpickr-month, .flatpickr-weekdays, span.flatpickr-weekday { background: var(--surface); color: var(--text-2); fill: var(--text-2); }
+    .flatpickr-current-month input.cur-year, .flatpickr-current-month .flatpickr-monthDropdown-months { color: var(--text); background: var(--surface); border: none; font-family: inherit; }
+    .flatpickr-time input { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); font-family: inherit; }
+    .flatpickr-time .flatpickr-am-pm { color: var(--text-2); background: var(--surface-2); }
+    .numInputWrapper span { border-color: var(--border); }
+    .numInputWrapper span svg path { fill: var(--text-3); }
+  </style>
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -140,14 +157,13 @@
       {% endif %}
     </div>
     <div class="nav-user">
-      <a href="/users/profile" style="text-decoration:none;">
+      <a href="/users/me" style="text-decoration:none;">
         <span class="nav-username">{{ current_user.username }}</span>
       </a>
       <span class="nav-role">{{ current_user.role.value }}</span>
       {% if current_user.role.value == 'admin' %}
         <a href="/users" style="font-size:10px;color:var(--text-3);letter-spacing:0.05em;text-transform:uppercase;padding:4px 8px;border-radius:3px;transition:color 0.12s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-3)'">users</a>
       {% endif %}
-      <a href="/users/me/password" class="nav-logout" style="margin-right:4px;">password</a>
       <a href="/logout" class="nav-logout">sign out</a>
     </div>
     {% else %}
@@ -162,5 +178,38 @@
     {% block content %}{% endblock %}
   </main>
 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  // Init all date inputs
+  document.querySelectorAll('input[type="date"]').forEach(el => {
+    flatpickr(el, {
+      dateFormat: "Y-m-d",
+      allowInput: true,
+    });
+  });
+  // Init all datetime inputs
+  document.querySelectorAll('input[type="datetime-local"]').forEach(el => {
+    const val = el.value;
+    flatpickr(el, {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      allowInput: true,
+      defaultDate: val || new Date(),
+      time_24hr: true,
+    });
+  });
+  // Init data-date-type="date" text inputs
+  document.querySelectorAll('input[data-fp="date"]').forEach(el => {
+    flatpickr(el, { dateFormat: "Y-m-d", allowInput: true });
+  });
+  // Init data-fp="datetime" text inputs
+  document.querySelectorAll('input[data-fp="datetime"]').forEach(el => {
+    flatpickr(el, {
+      enableTime: true, dateFormat: "Y-m-d H:i",
+      allowInput: true, time_24hr: true,
+      defaultDate: el.value || new Date(),
+    });
+  });
+</script>
 </body>
 </html>

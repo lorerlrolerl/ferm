@@ -1,75 +1,109 @@
-{% extends "base.html" %}
-{% block title %}{{ current_user.username }} — ferm{% endblock %}
+{% extends "base_detail.html" %}
+{% block title %}{{ user.username }} — ferm{% endblock %}
+
 {% block head %}
 <style>
-  .form-wrap { max-width: 520px; margin: 0 auto; }
-  .profile-header { margin-bottom: 28px; }
-  .profile-username {
-    font-family: Georgia, serif; font-size: 22px;
-    font-style: italic; color: var(--text); margin-bottom: 6px;
-  }
-  .role-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 24px;
-    display: flex; align-items: flex-start; gap: 14px;
-  }
-  .role-badge-lg {
-    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
-    padding: 4px 12px; border-radius: var(--radius); font-weight: 600;
-    white-space: nowrap; margin-top: 2px;
-  }
-  .role-admin  { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
-  .role-editor { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border); }
-  .role-viewer { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
-  .role-desc   { font-size: 12px; color: var(--text-2); line-height: 1.6; }
-  .success-banner {
-    background: var(--green-bg); border: 1px solid var(--green-border);
-    border-radius: var(--radius); padding: 10px 14px; margin-bottom: 20px;
-    font-size: 11px; color: var(--green);
-  }
+  .user-header-inner { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 8px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .dot-active   { background: var(--green); }
+  .dot-inactive { background: var(--text-3); }
 </style>
 {% endblock %}
-{% block content %}
-<div class="form-wrap">
 
-  <div class="profile-header">
-    <div class="profile-username">{{ current_user.username }}</div>
-    <div style="font-size:11px; color:var(--text-3);">{{ current_user.email }}</div>
-  </div>
+{% set breadcrumb = [("users", "/users"), (user.username, none)] %}
 
-  <div class="role-card">
-    <span class="role-badge-lg role-{{ current_user.role.value }}">{{ current_user.role.value }}</span>
-    <div class="role-desc">{{ role_description }}</div>
-  </div>
+{% block detail_title %}{{ user.username }}{% endblock %}
 
-  {% if success %}
-    <div class="success-banner">✓ Password updated successfully.</div>
-  {% endif %}
-
-  <div class="section-label">Change password</div>
-
-  <form method="post" action="/users/me/password">
-    <div class="form-section">
-      <div class="field">
-        <label>Current password</label>
-        <input type="password" name="current_password" required autofocus />
-        {% if errors.current_password %}<div class="field-error">{{ errors.current_password }}</div>{% endif %}
-      </div>
-      <div class="field">
-        <label>New password</label>
-        <input type="password" name="new_password" required placeholder="minimum 8 characters" />
-        {% if errors.new_password %}<div class="field-error">{{ errors.new_password }}</div>{% endif %}
-      </div>
-      <div class="field">
-        <label>Confirm new password</label>
-        <input type="password" name="confirm_password" required />
-        {% if errors.confirm_password %}<div class="field-error">{{ errors.confirm_password }}</div>{% endif %}
-      </div>
-    </div>
-    <div style="margin-top:16px;">
-      <button type="submit" class="btn btn-primary">update password</button>
-    </div>
-  </form>
-
+{% block detail_meta %}
+<div style="font-size:11px; color:var(--text-3); margin-top:2px;">{{ user.email }} · joined {{ user.created_at.strftime("%d %b %Y") }}</div>
+<div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+  <span class="role-badge role-{{ user.role.value }}">{{ user.role.value }}</span>
+  <span style="font-size:11px; color:var(--text-3);">{{ role_descriptions[user.role.value] }}</span>
 </div>
+<div style="margin-top:6px; font-size:11px;">
+  <span class="status-dot {{ 'dot-active' if user.is_active else 'dot-inactive' }}"></span>
+  {{ 'active' if user.is_active else 'inactive — cannot log in' }}
+</div>
+{% endblock %}
+
+{% block detail_actions %}
+<a href="/users/{{ user.id }}/edit" class="btn btn-ghost btn-sm">edit</a>
+{% if user.id != current_user.id %}
+  {% if user.is_active %}
+    <form method="post" action="/users/{{ user.id }}/deactivate"
+      onsubmit="return confirm('Deactivate {{ user.username }}?')">
+      <button type="submit" class="btn btn-ghost btn-sm">deactivate</button>
+    </form>
+  {% endif %}
+  {% if not has_content %}
+    <form method="post" action="/users/{{ user.id }}/delete"
+      onsubmit="return confirm('Permanently delete {{ user.username }}?')">
+      <button type="submit" class="btn btn-danger">delete</button>
+    </form>
+  {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block detail_content %}
+<div class="stat-row">
+  <div class="stat-chip"><strong>{{ ferments|length }}</strong>ferments created</div>
+  <div class="stat-chip"><strong>{{ batches|length }}</strong>batches created</div>
+  <div class="stat-chip"><strong>{{ logs|length }}{% if logs|length == 20 %}+{% endif %}</strong>log entries</div>
+</div>
+
+{% if ferments %}
+<div class="section-label">Ferments created</div>
+<table class="data-table" style="margin-bottom:24px;">
+  <thead><tr><th>Name</th><th>Category</th><th>Status</th><th>Created</th></tr></thead>
+  <tbody>
+    {% for f in ferments %}
+    <tr>
+      <td><a href="/ferments/{{ f.id }}" class="td-name">{{ f.name }}</a></td>
+      <td class="td-sub">{{ f.category.name if f.category else '—' }}</td>
+      <td>{% if f.status %}<span class="badge badge-status-{{ f.status.name|lower }}">{{ f.status.name }}</span>{% else %}—{% endif %}</td>
+      <td class="td-sub">{{ f.created_at.strftime("%d %b %Y") }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if batches %}
+<div class="section-label">Batches created</div>
+<table class="data-table" style="margin-bottom:24px;">
+  <thead><tr><th>Lot code</th><th>Ferment</th><th>Stage</th><th>Created</th></tr></thead>
+  <tbody>
+    {% for b in batches %}
+    <tr>
+      <td><a href="/ferments/{{ b.ferment_id }}/batches/{{ b.id }}" class="lot-code" style="font-size:11px;">{{ b.lot_code or 'B' + b.batch_number|string }}</a></td>
+      <td class="td-sub">{{ b.ferment.name if b.ferment else '—' }}</td>
+      <td class="td-sub">Stage {{ b.stage }}</td>
+      <td class="td-sub">{{ b.created_at.strftime("%d %b %Y") }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if logs %}
+<div class="section-label">Recent log entries <span style="color:var(--text-3);">last 20</span></div>
+<table class="data-table">
+  <thead><tr><th>Date</th><th>Batch</th><th>pH</th><th>Temp</th><th>Notes</th></tr></thead>
+  <tbody>
+    {% for entry in logs %}
+    <tr>
+      <td class="td-sub">{{ entry.logged_at.strftime("%d %b %Y %H:%M") }}</td>
+      <td><a href="/ferments/{{ entry.batch.ferment_id }}/batches/{{ entry.batch_id }}?tab=log" style="font-size:11px;color:var(--accent);">{{ entry.batch.lot_code or 'B' + entry.batch.batch_number|string }}</a></td>
+      <td class="td-mono" style="font-size:11px;">{{ entry.ph or '—' }}</td>
+      <td class="td-mono" style="font-size:11px;">{{ entry.temperature or '—' }}</td>
+      <td class="td-sub">{{ entry.notes | truncate(50) if entry.notes else '—' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if not ferments and not batches and not logs %}
+  <div class="empty-section">This user has not created any content yet.</div>
+{% endif %}
 {% endblock %}

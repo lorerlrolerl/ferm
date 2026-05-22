@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html" %}{# settings has unique layout — vertical tab strip — stays on base.html #}
 {% block title %}settings — ferm{% endblock %}
 
 {% block head %}
@@ -156,6 +156,7 @@
 
 <script>
 window.usageData = {
+  "additive_types":    { {% for row in data.additive_types %}{{ row.item.id }}: { usage: {{ row.usage|tojson }}, total: {{ row.total }} },{% endfor %} },
   "statuses":          { {% for row in data.statuses %}{{ row.item.id }}: { usage: {{ row.usage|tojson }}, total: {{ row.total }} },{% endfor %} },
   "categories":        { {% for row in data.categories %}{{ row.item.id }}: { usage: {{ row.usage|tojson }}, total: {{ row.total }} },{% endfor %} },
   "cut_sizes":         { {% for row in data.cut_sizes %}{{ row.item.id }}: { usage: {{ row.usage|tojson }}, total: {{ row.total }} },{% endfor %} },
@@ -173,9 +174,9 @@ window.itemNames = {{ item_names|tojson }};
   <!-- ── Vertical tabs ──────────────────────────────────────────── -->
   <div class="vtabs">
     <div class="vtabs-label">Settings</div>
-    {% set nav_keys =   ["statuses","categories","cut_sizes","tags","smell_descriptors","visual_descriptors","vessel_types","vessel_materials"] %}
-    {% set nav_labels = ["Statuses","Categories","Cut Sizes","Tags","Smell","Visual","Vessel Types","Vessel Mat."] %}
-    {% set nav_items =  [data.statuses,data.categories,data.cut_sizes,data.tags,data.smell_descriptors,data.visual_descriptors,data.vessel_types,data.vessel_materials] %}
+    {% set nav_keys =   ["additive_types","statuses","categories","cut_sizes","tags","smell_descriptors","visual_descriptors","vessel_types","vessel_materials"] %}
+    {% set nav_labels = ["Additive Types","Statuses","Categories","Cut Sizes","Tags","Smell","Visual","Vessel Types","Vessel Mat."] %}
+    {% set nav_items =  [data.additive_types,data.statuses,data.categories,data.cut_sizes,data.tags,data.smell_descriptors,data.visual_descriptors,data.vessel_types,data.vessel_materials] %}
     {% for i in range(nav_keys|length) %}
     <button class="vtab {{ 'active' if active_section == nav_keys[i] }}" id="vtab-{{ nav_keys[i] }}"
       onclick="switchPanel('{{ nav_keys[i] }}')">
@@ -265,6 +266,7 @@ window.itemNames = {{ item_names|tojson }};
     </div>
     {% endmacro %}
 
+    {{ render_panel("additive_types", "Additive Types",   "Categories for additives. Editing updates all additives of this type.", data.additive_types, true,  false) }}
     {{ render_panel("statuses",          "Statuses",           "Assigned to ferments, batches, containers.",       data.statuses,          false, true)  }}
     {{ render_panel("categories",        "Categories",         "Fermentation type assigned to ferments.",           data.categories,        true,  false) }}
     {{ render_panel("cut_sizes",         "Cut Sizes",          "Preparation style assigned to ingredients.",        data.cut_sizes,         true,  false) }}

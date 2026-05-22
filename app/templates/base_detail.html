@@ -1,0 +1,46 @@
+{#
+  base_detail.html — Base for detail/show pages.
+
+  Variables:
+    breadcrumb    — list of (label, url) tuples
+    detail_title  — main heading
+    detail_sub    — optional subtitle
+
+  Blocks:
+    {% block head %}          — extra styles/scripts
+    {% block detail_header %} — override the whole header area
+    {% block detail_actions %}— buttons top-right
+    {% block detail_content %}— main body content
+#}
+{% extends "base.html" %}
+
+{% block head %}{% endblock %}
+
+{% block content %}
+<div class="wrap">
+
+  {% if breadcrumb %}
+  <div class="breadcrumb">
+    {% for label, url in breadcrumb %}
+      {% if url %}<a href="{{ url }}">{{ label }}</a><span class="breadcrumb-sep">/</span>
+      {% else %}<span>{{ label }}</span>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% block detail_header %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">{% block detail_title %}{% endblock %}</div>
+      {% block detail_meta %}{% endblock %}
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+      {% block detail_actions %}{% endblock %}
+    </div>
+  </div>
+  {% endblock %}
+
+  {% block detail_content %}{% endblock %}
+
+</div>
+{% endblock %}

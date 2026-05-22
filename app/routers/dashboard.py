@@ -8,8 +8,9 @@ from sqlalchemy.orm import Session, joinedload
 from app.auth import require_user
 from app.database import get_db
 from app.models.ferment import Batch, Ferment
+from app.models.log import BatchLog
 from app.models.lookup import Status
-from app.models.schedule import Schedule, ScheduleEvent
+from app.models.schedule import Schedule
 from app.models.tool import Tool
 from app.models.user import User
 from app.templates import templates
@@ -31,17 +32,17 @@ def dashboard(
     now = datetime.now(timezone.utc).replace(tzinfo=None)
 
     # ── Status id lookups ──────────────────────────────────────────────────
-    active_id  = _get_status_id(db, "active")
-    stasis_id  = _get_status_id(db, "stasis")
-    ready_id   = _get_status_id(db, "ready")
+    active_id = _get_status_id(db, "active")
+    stasis_id = _get_status_id(db, "stasis")
+    ready_id  = _get_status_id(db, "ready")
 
-    # ── KPI counts ─────────────────────────────────────────────────────────
-    total_ferments  = db.query(Ferment).filter(Ferment.archived_at == None).count()
-    active_count    = db.query(Ferment).filter(Ferment.status_id == active_id,  Ferment.archived_at == None).count()
-    stasis_count    = db.query(Ferment).filter(Ferment.status_id == stasis_id,  Ferment.archived_at == None).count()
-    ready_count     = db.query(Ferment).filter(Ferment.status_id == ready_id,   Ferment.archived_at == None).count()
+    # ── KPI counts — based on ferment status ───────────────────────────────
+    total_ferments = db.query(Ferment).filter(Ferment.archived_at == None).count()
+    active_count   = db.query(Ferment).filter(Ferment.status_id == active_id, Ferment.archived_at == None).count()
+    stasis_count   = db.query(Ferment).filter(Ferment.status_id == stasis_id, Ferment.archived_at == None).count()
+    ready_count    = db.query(Ferment).filter(Ferment.status_id == ready_id,  Ferment.archived_at == None).count()
 
-    # ── Active ferments with latest batch ──────────────────────────────────
+    # ── Active + stasis ferments ───────────────────────────────────────────
     active_ferments = (
         db.query(Ferment)
         .filter(Ferment.archived_at == None)
@@ -57,8 +58,30 @@ def dashboard(
         .all()
     )
 
-    # Attach latest batch and age in days to each ferment
+    # Preload last log per batch for all active ferments
+    batch_ids = [b.id for f in active_ferments for b in f.batches]
+    last_log_by_batch = {}
+    if batch_ids:
+        # Subquery: most recent log per batch
+        subq = (
+            db.query(
+                BatchLog.batch_id,
+                func.max(BatchLog.logged_at).label("latest")
+            )
+            .filter(BatchLog.batch_id.in_(batch_ids))
+            .group_by(BatchLog.batch_id)
+            .subquery()
+        )
+        last_logs = (
+            db.query(BatchLog)
+            .join(subq, (BatchLog.batch_id == subq.c.batch_id) &
+                         (BatchLog.logged_at == subq.c.latest))
+            .all()
+        )
+        last_log_by_batch = {log.batch_id: log for log in last_logs}
+
     ferment_data = []
+    stasis_data  = []
     for ferment in active_ferments:
         latest_batch = (
             sorted(ferment.batches, key=lambda b: b.started_at or datetime.min)[-1]
@@ -70,13 +93,26 @@ def dashboard(
         )
         age_days = (now - started).days if started else None
 
-        ferment_data.append({
+        # Last log info for this batch
+        last_log = last_log_by_batch.get(latest_batch.id) if latest_batch else None
+        days_since_log = (now - last_log.logged_at).days if last_log and last_log.logged_at else None
+
+        entry = {
             "ferment": ferment,
             "latest_batch": latest_batch,
             "age_days": age_days,
-        })
+            "last_log": last_log,
+            "days_since_log": days_since_log,
+        }
+        if ferment.status_id == stasis_id:
+            stasis_data.append(entry)
+        else:
+            ferment_data.append(entry)
 
-    # ── Schedules due today or overdue ─────────────────────────────────────
+    # Active first, then stasis below
+    ferment_data = ferment_data + stasis_data
+
+    # ── Schedules due ──────────────────────────────────────────────────────
     due_schedules = (
         db.query(Schedule)
         .filter(
@@ -89,7 +125,6 @@ def dashboard(
         .all()
     )
 
-    # Resolve target names for due schedules
     def _target_name(s):
         try:
             if s.target_type == "ferment":
@@ -111,11 +146,20 @@ def dashboard(
         for s in due_schedules
     ]
 
+    hour = now.hour
+    if hour < 12:
+        greeting = "Goedemorgen"
+    elif hour < 18:
+        greeting = "Goedemiddag"
+    else:
+        greeting = "Goedenavond"
+
     return templates.TemplateResponse(
         request,
         "dashboard.html",
         {
             "current_user": current_user,
+            "greeting": greeting,
             "total_ferments": total_ferments,
             "active_count": active_count,
             "stasis_count": stasis_count,

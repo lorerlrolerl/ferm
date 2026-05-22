@@ -1,46 +1,43 @@
-{% extends "base.html" %}
+{% extends "base_form.html" %}
 {% block title %}new user — ferm{% endblock %}
-{% block head %}<style>.form-wrap{max-width:520px;margin:0 auto;}.page-title{font-family:Georgia,serif;font-size:20px;font-style:italic;color:var(--accent);margin-bottom:24px;}</style>{% endblock %}
-{% block content %}
-<div class="form-wrap">
-  <div class="page-title">new user</div>
-  <form method="post" action="/users/new">
-    <div class="form-section">
-      <div class="form-section-title">Account</div>
-      <div class="field">
-        <label>Username *</label>
-        <input type="text" name="username" required autofocus placeholder="e.g. clara" />
-        {% if errors.username %}<div class="field-error">{{ errors.username }}</div>{% endif %}
-      </div>
-      <div class="field">
-        <label>Email *</label>
-        <input type="email" name="email" required placeholder="clara@kitchen.local" />
-        {% if errors.email %}<div class="field-error">{{ errors.email }}</div>{% endif %}
-      </div>
-      <div class="field">
-        <label>Password *</label>
-        <input type="password" name="password" required placeholder="minimum 8 characters" />
-        {% if errors.password %}<div class="field-error">{{ errors.password }}</div>{% endif %}
-      </div>
-      <div class="field">
-        <label>Role</label>
-        <select name="role">
-          {% for r in roles %}
-            <option value="{{ r }}">{{ r }}</option>
-          {% endfor %}
-        </select>
-        <div class="field-hint">
-          <strong style="color:var(--accent);">admin</strong> — full access, manage users and lookups ·
-          <strong style="color:var(--blue);">editor</strong> — create and edit ferments, log entries ·
-          <strong style="color:var(--text-2);">viewer</strong> — read only
-        </div>
-        {% if errors.role %}<div class="field-error">{{ errors.role }}</div>{% endif %}
+{% block form_title %}new user{% endblock %}
+
+{% block form_content %}
+<form method="post" action="/users/new">
+  <div class="form-section">
+    <div class="form-section-title">Account</div>
+    <div class="field">
+      <label>Username *</label>
+      <input type="text" name="username" required autofocus placeholder="e.g. clara" />
+      {% if errors.username %}<div class="field-error">{{ errors.username }}</div>{% endif %}
+    </div>
+    <div class="field">
+      <label>Email *</label>
+      <input type="email" name="email" required placeholder="clara@kitchen.local" />
+      {% if errors.email %}<div class="field-error">{{ errors.email }}</div>{% endif %}
+    </div>
+    <div class="field">
+      <label>Password *</label>
+      <input type="password" name="password" required placeholder="minimum 8 characters" />
+      {% if errors.password %}<div class="field-error">{{ errors.password }}</div>{% endif %}
+    </div>
+    <div class="field">
+      <label>Role</label>
+      <select name="role">
+        {% for r in roles %}
+          <option value="{{ r }}">{{ r }}</option>
+        {% endfor %}
+      </select>
+      <div class="field-hint">
+        <strong style="color:var(--accent);">admin</strong> — full access ·
+        <strong style="color:var(--blue);">editor</strong> — create and edit ·
+        <strong style="color:var(--text-2);">viewer</strong> — read only
       </div>
     </div>
-    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button type="submit" class="btn btn-primary">create user</button>
-      <a href="/users" class="btn btn-ghost">cancel</a>
-    </div>
-  </form>
-</div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">create user</button>
+    <a href="/users" class="btn btn-ghost">cancel</a>
+  </div>
+</form>
 {% endblock %}

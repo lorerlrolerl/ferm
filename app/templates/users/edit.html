@@ -1,60 +1,53 @@
-{% extends "base.html" %}
+{% extends "base_form.html" %}
 {% block title %}edit {{ user.username }} — ferm{% endblock %}
-{% block head %}<style>.form-wrap{max-width:520px;margin:0 auto;}.page-title{font-family:Georgia,serif;font-size:20px;font-style:italic;color:var(--accent);margin-bottom:4px;}.page-sub{font-size:11px;color:var(--text-3);margin-bottom:24px;}</style>{% endblock %}
-{% block content %}
-<div class="form-wrap">
-  <div class="page-title">edit user</div>
-  <div class="page-sub">{{ user.username }} · {{ user.role.value }}</div>
-  <form method="post" action="/users/{{ user.id }}/edit">
-    <div class="form-section">
-      <div class="form-section-title">Account</div>
-      <div class="field">
-        <label>Username</label>
-        <input type="text" value="{{ user.username }}" disabled style="opacity:0.5;" />
-        <div class="field-hint">Username cannot be changed.</div>
-      </div>
-      <div class="field">
-        <label>Email *</label>
-        <input type="email" name="email" required value="{{ user.email }}" />
-        {% if errors.email %}<div class="field-error">{{ errors.email }}</div>{% endif %}
-      </div>
-      <div class="field">
-        <label>Role</label>
-        <select name="role">
-          {% for r in roles %}
-            <option value="{{ r }}" {% if user.role.value == r %}selected{% endif %}>{{ r }}</option>
-          {% endfor %}
-        </select>
-        {% if errors.role %}<div class="field-error">{{ errors.role }}</div>{% endif %}
-      </div>
-      <div class="field">
-        <label class="field-check">
-          <input type="checkbox" name="is_active" value="true" {% if user.is_active %}checked{% endif %} />
-          <span>Active — can log in</span>
-        </label>
-        {% if errors.is_active %}<div class="field-error">{{ errors.is_active }}</div>{% endif %}
-      </div>
-    </div>
+{% block form_title %}edit user{% endblock %}
+{% block form_sub %}{{ user.username }} · {{ user.role.value }}{% endblock %}
 
-    <div class="form-section">
-      <div class="form-section-title">Reset password (leave blank to keep current)</div>
-      <div class="field">
-        <label>New password</label>
-        <input type="password" name="new_password" placeholder="minimum 8 characters" />
-        {% if errors.new_password %}<div class="field-error">{{ errors.new_password }}</div>{% endif %}
-      </div>
+{% block form_content %}
+<form method="post" action="/users/{{ user.id }}/edit">
+  <div class="form-section">
+    <div class="form-section-title">Account</div>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" value="{{ user.username }}" disabled style="opacity:0.5;" />
+      <div class="field-hint">Username cannot be changed.</div>
     </div>
-
-    {% if has_content %}
-    <div style="font-size:11px; color:var(--text-3); margin-bottom:14px;">
-      This user has created ferments or log entries — account can be deactivated but not deleted.
+    <div class="field">
+      <label>Email *</label>
+      <input type="email" name="email" required value="{{ user.email }}" />
+      {% if errors.email %}<div class="field-error">{{ errors.email }}</div>{% endif %}
     </div>
-    {% endif %}
-
-    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button type="submit" class="btn btn-primary">save changes</button>
-      <a href="/users" class="btn btn-ghost">cancel</a>
+    <div class="field">
+      <label>Role</label>
+      <select name="role">
+        {% for r in roles %}
+          <option value="{{ r }}" {% if user.role.value == r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+      </select>
+      {% if errors.role %}<div class="field-error">{{ errors.role }}</div>{% endif %}
     </div>
-  </form>
-</div>
+    <div class="field">
+      <label class="field-check">
+        <input type="checkbox" name="is_active" value="true" {% if user.is_active %}checked{% endif %} />
+        <span>Active — can log in</span>
+      </label>
+      {% if errors.is_active %}<div class="field-error">{{ errors.is_active }}</div>{% endif %}
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title">Reset password (leave blank to keep current)</div>
+    <div class="field">
+      <label>New password</label>
+      <input type="password" name="new_password" placeholder="minimum 8 characters" />
+      {% if errors.new_password %}<div class="field-error">{{ errors.new_password }}</div>{% endif %}
+    </div>
+  </div>
+  {% if has_content %}
+    <div class="info-banner">This user has created content — can be deactivated but not deleted.</div>
+  {% endif %}
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">save changes</button>
+    <a href="/users/{{ user.id }}" class="btn btn-ghost">cancel</a>
+  </div>
+</form>
 {% endblock %}

@@ -1,0 +1,39 @@
+{#
+  base_list.html — Base for all list/index pages.
+
+  Variables to set in child template:
+    page_title    — e.g. "ferments"
+    page_sub      — e.g. "12 active"  (optional)
+    new_url       — e.g. "/ferments/new"  (optional, shows + new button)
+    new_label     — e.g. "new ferment"  (default: "new")
+    require_editor — if true, only show new button to editors/admins
+
+  Blocks:
+    {% block head %}       — extra <style> or <script> in <head>
+    {% block filters %}    — filter bar below page header
+    {% block content %}    — main content (table, cards, etc.)
+#}
+{% extends "base.html" %}
+
+{% block head %}{% endblock %}
+
+{% block content %}
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">{% block page_title %}{% endblock %}</div>
+      <div class="page-sub">{% block page_sub %}{% endblock %}</div>
+    </div>
+    {% block page_action %}
+    {% if new_url and current_user and current_user.role.value in ['admin','editor'] %}
+      <a href="{{ new_url }}" class="btn btn-primary">+ {{ new_label | default('new') }}</a>
+    {% endif %}
+    {% endblock %}
+  </div>
+
+  {% block filters %}{% endblock %}
+  {% block list_content %}{% endblock %}
+
+</div>
+{% endblock %}

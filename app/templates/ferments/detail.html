@@ -1,160 +1,101 @@
-{% extends "base.html" %}
+{% extends "base_detail.html" %}
 {% block title %}{{ ferment.name }} — ferm{% endblock %}
 
 {% block head %}
 <style>
-  .detail-wrap { max-width: 1000px; margin: 0 auto; }
-  .ferment-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
-  .ferment-title { font-family: Georgia, serif; font-size: 24px; font-style: italic; color: #d8d3c8; margin-bottom: 6px; }
-  .ferment-meta { font-size: 11px; color: #3a3830; margin-bottom: 8px; }
-  .ferment-badges { display: flex; gap: 5px; flex-wrap: wrap; }
-  .badge { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
-  .badge-status-active  { background: #0a1e10; color: #4db88a; border: 0.5px solid #143020; }
-  .badge-status-stasis  { background: #2a1a00; color: #c8a96e; border: 0.5px solid #3a2800; }
-  .badge-status-ready   { background: #1e2a0a; color: #a0c840; border: 0.5px solid #2a3810; }
-  .badge-status-failed  { background: #2a0a0a; color: #e85858; border: 0.5px solid #3a1010; }
-  .badge-status-stopped { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
-  .badge-status-default { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
-  .badge-cat    { background: #1a1a30; color: #8888c8; border: 0.5px solid #2a2a48; }
-  .badge-ongoing{ background: #1a2a1a; color: #5a8a5a; border: 0.5px solid #243824; }
-  .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
-  .btn { display: inline-block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 14px; border-radius: 4px; cursor: pointer; transition: background 0.15s; text-decoration: none; font-family: inherit; border: none; }
-  .btn-ghost { background: transparent; color: #4a4840; border: 0.5px solid #252421; }
-  .btn-ghost:hover { color: #e8e3d8; border-color: #3a3830; }
-  .btn-primary { background: #c8a96e; color: #111210; font-weight: 600; }
-  .btn-primary:hover { background: #d4b97e; }
-  .ferment-description { font-size: 12px; color: #5a5850; margin-bottom: 24px; line-height: 1.6; max-width: 600px; }
-  .section-label { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #4a4840; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
-  .section-label::after { content: ''; flex: 1; height: 0.5px; background: #1e1d1b; }
-
-  /* Batch cards — now clickable links */
-  .batch-list { display: flex; flex-direction: column; gap: 6px; }
-  .batch-card {
-    background: #151412; border: 0.5px solid #252421; border-radius: 6px;
-    overflow: hidden; text-decoration: none; color: inherit; display: block;
+  .wrap { max-width: 1000px; }
+  .ferment-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+  .batch-list  { display: flex; flex-direction: column; gap: 6px; }
+  .batch-card  {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+    text-decoration: none; color: inherit; display: block;
     transition: border-color 0.15s, background 0.15s;
   }
-  .batch-card:hover { border-color: #3a3830; background: #1a1916; }
-  .batch-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; gap: 12px; }
+  .batch-card:hover { border-color: var(--text-3); background: var(--surface-2); }
+  .batch-header-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; gap: 12px; }
   .batch-header-left { display: flex; align-items: center; gap: 12px; }
-  .lot-code { font-family: 'DM Mono','Courier New',monospace; font-size: 13px; color: #c8a96e; letter-spacing: 0.06em; background: #1a1200; border: 0.5px solid #3a2800; border-radius: 3px; padding: 3px 10px; }
-  .batch-num { font-size: 10px; color: #3a3830; letter-spacing: 0.06em; text-transform: uppercase; }
-  .batch-body { padding: 10px 16px 14px; border-top: 0.5px solid #1a1916; }
-  .batch-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
-  .meta-label { font-size: 9px; color: #3a3830; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2px; }
-  .meta-value { font-size: 12px; color: #9a9488; }
-  .meta-value.amber { color: #c8a96e; }
-  .meta-value.age { font-family: Georgia,serif; font-size: 18px; color: #4a4840; font-weight: 700; }
-  .batch-notes { font-size: 11px; color: #4a4840; line-height: 1.6; padding-top: 10px; border-top: 0.5px solid #1a1916; font-style: italic; margin-top: 10px; }
-  .view-hint { font-size: 10px; color: #3a3830; letter-spacing: 0.04em; }
-
-  .empty-batch { text-align: center; padding: 40px; color: #2a2a28; font-style: italic; font-family: Georgia, serif; }
+  .batch-num   { font-size: 10px; color: var(--text-3); letter-spacing: 0.06em; text-transform: uppercase; }
+  .batch-body  { padding: 10px 16px 14px; border-top: 1px solid var(--border-soft); }
+  .batch-grid  { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  .meta-label  { font-size: 9px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2px; }
+  .meta-value  { font-size: 12px; color: var(--text-2); }
+  .meta-value.age { font-family: Georgia,serif; font-size: 18px; color: var(--text-3); font-weight: 700; }
+  .meta-value.amber { color: var(--accent); }
+  .batch-notes { font-size: 11px; color: var(--text-3); line-height: 1.6; padding-top: 10px; border-top: 1px solid var(--border-soft); font-style: italic; margin-top: 10px; }
+  .view-hint   { font-size: 10px; color: var(--text-3); letter-spacing: 0.04em; }
+  .empty-batch { text-align: center; padding: 40px; color: var(--text-3); font-style: italic; font-family: Georgia, serif; }
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="detail-wrap">
+{% set breadcrumb = [("Ferments", "/ferments"), (ferment.name, none)] %}
 
-  <div class="ferment-header">
-    <div>
-      <div class="ferment-title">{{ ferment.name }}</div>
-      <div class="ferment-meta">
-        created {{ ferment.created_at.strftime("%d %b %Y") }}
-        {% if ferment.created_by_user %} by {{ ferment.created_by_user.username }}{% endif %}
-        · #{{ ferment.id }}
-      </div>
-      <div class="ferment-badges">
-        {% if ferment.status %}
-          <span class="badge badge-status-{{ ferment.status.name | lower | replace(' ', '-') }}">{{ ferment.status.name }}</span>
-        {% endif %}
-        {% if ferment.category %}
-          <span class="badge badge-cat">{{ ferment.category.name }}</span>
-        {% endif %}
-        {% if ferment.is_ongoing %}
-          <span class="badge badge-ongoing">ongoing</span>
-        {% endif %}
-      </div>
-    </div>
-    <div class="header-actions">
-      {% if current_user.role.value in ['admin', 'editor'] %}
-        <a href="/ferments/{{ ferment.id }}/batches/new" class="btn btn-primary">+ new batch</a>
-        <a href="/ferments/{{ ferment.id }}/edit" class="btn btn-ghost">edit</a>
-      {% endif %}
-      <a href="/ferments" class="btn btn-ghost">← all ferments</a>
-    </div>
-  </div>
+{% block detail_title %}{{ ferment.name }}{% endblock %}
 
-  {% if ferment.description %}
-    <div class="ferment-description">{{ ferment.description }}</div>
-  {% endif %}
-
-  <div class="section-label">
-    Batches
-    <span style="color:#3a3830; font-size:10px;">{{ batches | length }}</span>
-  </div>
-
-  {% if batches %}
-  <div class="batch-list">
-    {% for batch in batches %}
-    <a href="/ferments/{{ ferment.id }}/batches/{{ batch.id }}" class="batch-card">
-      <div class="batch-header">
-        <div class="batch-header-left">
-          {% if batch.lot_code %}
-            <span class="lot-code">{{ batch.lot_code }}</span>
-          {% endif %}
-          <span class="batch-num">B{{ batch.batch_number }} · Stage {{ batch.stage }}</span>
-          {% if batch.status %}
-            <span class="badge badge-status-{{ batch.status.name | lower | replace(' ', '-') }}">{{ batch.status.name }}</span>
-          {% endif %}
-        </div>
-        <span class="view-hint">view →</span>
-      </div>
-      <div class="batch-body">
-        <div class="batch-meta-grid">
-          <div>
-            <div class="meta-label">Started</div>
-            <div class="meta-value">{{ batch.started_at.strftime("%d %b %Y") if batch.started_at else "—" }}</div>
-          </div>
-          <div>
-            <div class="meta-label">Age</div>
-            <div class="meta-value age">
-              {% if batch.started_at %}{{ (now - batch.started_at).days }}<span style="font-size:10px; font-family:monospace; font-weight:400;"> d</span>{% else %}—{% endif %}
-            </div>
-          </div>
-          <div>
-            <div class="meta-label">Target Ready</div>
-            <div class="meta-value">{{ batch.target_ready_at.strftime("%d %b %Y") if batch.target_ready_at else "—" }}</div>
-          </div>
-          <div>
-            <div class="meta-label">pH target</div>
-            <div class="meta-value amber">{{ batch.target_ph if batch.target_ph else "—" }}</div>
-          </div>
-          <div>
-            <div class="meta-label">Ingredients</div>
-            <div class="meta-value">{{ batch.ingredients | length }}</div>
-          </div>
-          <div>
-            <div class="meta-label">Containers</div>
-            <div class="meta-value">{{ batch.containers | length }}</div>
-          </div>
-        </div>
-        {% if batch.notes %}
-          <div class="batch-notes">{{ batch.notes | truncate(120) }}</div>
-        {% endif %}
-      </div>
-    </a>
-    {% endfor %}
-  </div>
-
-  {% else %}
-  <div class="empty-batch">
-    no batches yet.
-    {% if current_user.role.value in ['admin', 'editor'] %}
-      <br><br>
-      <a href="/ferments/{{ ferment.id }}/batches/new" class="btn btn-primary">+ new batch</a>
-    {% endif %}
-  </div>
-  {% endif %}
-
+{% block detail_meta %}
+<div class="page-sub">
+  created {{ ferment.created_at.strftime("%d %b %Y") }}
+  {% if ferment.created_by_user %} by {{ ferment.created_by_user.username }}{% endif %}
+  · #{{ ferment.id }}
 </div>
+<div class="ferment-badges">
+  {% if ferment.status %}
+    <span class="badge badge-status-{{ ferment.status.name | lower | replace(' ', '-') }}">{{ ferment.status.name }}</span>
+  {% endif %}
+  {% if ferment.category %}<span class="badge badge-cat">{{ ferment.category.name }}</span>{% endif %}
+  {% if ferment.is_ongoing %}<span class="badge badge-ongoing">ongoing</span>{% endif %}
+</div>
+{% endblock %}
+
+{% block detail_actions %}
+{% if current_user.role.value in ['admin', 'editor'] %}
+  <a href="/ferments/{{ ferment.id }}/batches/new" class="btn btn-primary">+ new batch</a>
+  <a href="/ferments/{{ ferment.id }}/edit" class="btn btn-ghost">edit</a>
+{% endif %}
+<a href="/ferments" class="btn btn-ghost">← all</a>
+{% endblock %}
+
+{% block detail_content %}
+{% if ferment.description %}
+  <div style="font-size:12px; color:var(--text-2); margin-bottom:24px; line-height:1.6; max-width:600px;">{{ ferment.description }}</div>
+{% endif %}
+
+<div class="section-label">Batches <span class="section-count">{{ batches | length }}</span></div>
+
+{% if batches %}
+<div class="batch-list">
+  {% for batch in batches %}
+  <a href="/ferments/{{ ferment.id }}/batches/{{ batch.id }}" class="batch-card">
+    <div class="batch-header-row">
+      <div class="batch-header-left">
+        {% if batch.lot_code %}<span class="lot-code">{{ batch.lot_code }}</span>{% endif %}
+        <span class="batch-num">B{{ batch.batch_number }} · Stage {{ batch.stage }}</span>
+        {% if batch.status %}
+          <span class="badge badge-status-{{ batch.status.name | lower | replace(' ', '-') }}">{{ batch.status.name }}</span>
+        {% endif %}
+      </div>
+      <span class="view-hint">view →</span>
+    </div>
+    <div class="batch-body">
+      <div class="batch-grid">
+        <div><div class="meta-label">Started</div><div class="meta-value">{{ batch.started_at.strftime("%d %b %Y") if batch.started_at else "—" }}</div></div>
+        <div><div class="meta-label">Age</div><div class="meta-value age">{% if batch.started_at %}{{ (now - batch.started_at).days }}<span style="font-size:10px;font-family:monospace;font-weight:400;"> d</span>{% else %}—{% endif %}</div></div>
+        <div><div class="meta-label">Target Ready</div><div class="meta-value">{{ batch.target_ready_at.strftime("%d %b %Y") if batch.target_ready_at else "—" }}</div></div>
+        <div><div class="meta-label">pH target</div><div class="meta-value amber">{{ batch.target_ph if batch.target_ph else "—" }}</div></div>
+        <div><div class="meta-label">Ingredients</div><div class="meta-value">{{ batch.ingredients | length }}</div></div>
+        <div><div class="meta-label">Containers</div><div class="meta-value">{{ batch.containers | length }}</div></div>
+      </div>
+      {% if batch.notes %}<div class="batch-notes">{{ batch.notes | truncate(120) }}</div>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-batch">
+  no batches yet.
+  {% if current_user.role.value in ['admin', 'editor'] %}
+    <br><br><a href="/ferments/{{ ferment.id }}/batches/new" class="btn btn-primary">+ new batch</a>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

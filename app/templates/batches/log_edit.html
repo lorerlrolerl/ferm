@@ -1,0 +1,92 @@
+{% extends "base_form.html" %}
+{% block title %}edit log — {{ batch.lot_code }} — ferm{% endblock %}
+{% block form_title %}edit log entry{% endblock %}
+
+{% block head %}
+<style>
+  .form-wrap { max-width: 700px; }
+  .log-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+  .descriptor-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+</style>
+{% endblock %}
+
+{% block form_content %}
+<div class="breadcrumb">
+  <a href="/ferments">ferments</a><span class="breadcrumb-sep">/</span>
+  <a href="/ferments/{{ ferment.id }}">{{ ferment.name }}</a><span class="breadcrumb-sep">/</span>
+  <a href="/ferments/{{ ferment.id }}/batches/{{ batch.id }}?tab=log">{{ batch.lot_code }}</a><span class="breadcrumb-sep">/</span>
+  <span>edit log</span>
+</div>
+
+<form method="post" action="/ferments/{{ ferment.id }}/batches/{{ batch.id }}/logs/{{ entry.id }}/edit">
+  <div class="form-section">
+    <div class="form-section-title">Entry</div>
+    <div class="log-grid" style="margin-bottom:12px;">
+      <div class="field">
+        <label>Date &amp; Time</label>
+        <input type="datetime-local" name="logged_at"
+          value="{{ entry.logged_at.strftime('%Y-%m-%dT%H:%M') if entry.logged_at else '' }}" />
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select name="status_id">
+          <option value="">— no change —</option>
+          {% for st in statuses %}
+            <option value="{{ st.id }}" {% if entry.status_id == st.id %}selected{% endif %}>{{ st.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>pH</label>
+        <input type="number" name="ph" step="0.01" min="0" max="14"
+          value="{{ entry.ph or '' }}" placeholder="e.g. 3.6" />
+      </div>
+      <div class="field">
+        <label>Temperature (°C)</label>
+        <input type="number" name="temperature" step="0.1"
+          value="{{ entry.temperature or '' }}" placeholder="e.g. 21.5" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Smell descriptors</label>
+      <div class="descriptor-row">
+        {% for d in smell_descriptors %}
+          <input type="checkbox" id="sm_{{ d.id }}" name="smell_ids" value="{{ d.id }}" class="descriptor-opt"
+            {% if d in entry.smell_descriptors %}checked{% endif %} />
+          <label for="sm_{{ d.id }}" class="descriptor-label">{{ d.name }}</label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label>Smell notes</label>
+      <input type="text" name="smell_notes" value="{{ entry.smell_notes or '' }}" placeholder="Free text smell notes..." />
+    </div>
+
+    <div class="field" style="margin-top:10px;">
+      <label>Visual descriptors</label>
+      <div class="descriptor-row">
+        {% for d in visual_descriptors %}
+          <input type="checkbox" id="vi_{{ d.id }}" name="visual_ids" value="{{ d.id }}" class="descriptor-opt"
+            {% if d in entry.visual_descriptors %}checked{% endif %} />
+          <label for="vi_{{ d.id }}" class="descriptor-label">{{ d.name }}</label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label>Visual notes</label>
+      <input type="text" name="visual_notes" value="{{ entry.visual_notes or '' }}" placeholder="Free text visual notes..." />
+    </div>
+
+    <div class="field" style="margin-top:10px;">
+      <label>General notes</label>
+      <textarea name="notes" placeholder="Any other observations...">{{ entry.notes or '' }}</textarea>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">save changes</button>
+    <a href="/ferments/{{ ferment.id }}/batches/{{ batch.id }}?tab=log" class="btn btn-ghost">cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,96 +1,47 @@
-{% extends "base.html" %}
+{% extends "base_form.html" %}
 {% block title %}new ingredient — ferm{% endblock %}
+{% block form_title %}new ingredient{% endblock %}
 
-{% block head %}
-<style>
-  .form-wrap { max-width: 560px; margin: 0 auto; }
-  .page-title { font-family: Georgia, serif; font-size: 20px; font-style: italic; color: #c8a96e; margin-bottom: 24px; }
-  .form-section { background: #151412; border: 0.5px solid #252421; border-radius: 6px; padding: 20px 24px; margin-bottom: 12px; }
-  .form-section-title { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #4a4840; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 0.5px solid #1e1d1b; }
-  .field { margin-bottom: 14px; }
-  .field:last-child { margin-bottom: 0; }
-  .field label { display: block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #5a5850; margin-bottom: 6px; }
-  .field-error { font-size: 10px; color: #e85858; margin-top: 4px; }
-  .field input[type="text"], .field select, .field textarea {
-    width: 100%; background: #0e0e0c; border: 0.5px solid #2a2a28;
-    border-radius: 4px; padding: 9px 12px; font-size: 13px;
-    font-family: inherit; color: #e8e3d8; outline: none; transition: border-color 0.15s;
-  }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color: #c8a96e55; }
-  .field select option { background: #151412; }
-  .field textarea { resize: vertical; min-height: 80px; }
-  .field input.error { border-color: #e8585855; }
-
-  /* Tag checkboxes */
-  .tag-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tag-option { display: none; }
-  .tag-label {
-    font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 4px 10px; border-radius: 3px; cursor: pointer;
-    background: #0e0e0c; border: 0.5px solid #2a2a28; color: #5a5850;
-    transition: all 0.15s; user-select: none;
-  }
-  .tag-option:checked + .tag-label {
-    background: #1a2010; color: #6a9a5a; border-color: #243018;
-  }
-  .tag-label:hover { border-color: #3a3830; color: #9a9488; }
-
-  .form-actions { display: flex; gap: 10px; align-items: center; margin-top: 20px; }
-  .btn { display: inline-block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 9px 20px; border-radius: 4px; cursor: pointer; transition: background 0.15s; text-decoration: none; font-family: inherit; border: none; }
-  .btn-primary { background: #c8a96e; color: #111210; font-weight: 600; }
-  .btn-primary:hover { background: #d4b97e; }
-  .btn-ghost { background: transparent; color: #4a4840; border: 0.5px solid #252421; }
-  .btn-ghost:hover { color: #e8e3d8; border-color: #3a3830; }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="form-wrap">
-  <div class="page-title">new ingredient</div>
-
-  <form method="post" action="/ingredients/new">
-    <div class="form-section">
-      <div class="form-section-title">Ingredient</div>
-
+{% block form_content %}
+{% if errors.general %}<div class="error-banner">{{ errors.general }}</div>{% endif %}
+<form method="post" action="/ingredients/new">
+  <div class="form-section">
+    <div class="form-section-title">Ingredient</div>
+    <div class="field-row">
       <div class="field">
-        <label for="name">Name *</label>
-        <input type="text" id="name" name="name" required autofocus
-          class="{{ 'error' if errors.name }}"
-          placeholder="e.g. Cabbage thinly shredded, Sea salt"
-        />
+        <label>Name *</label>
+        <input type="text" name="name" required autofocus placeholder="e.g. White Cabbage" />
         {% if errors.name %}<div class="field-error">{{ errors.name }}</div>{% endif %}
       </div>
-
       <div class="field">
-        <label for="cut_size_id">Cut Size</label>
-        <select id="cut_size_id" name="cut_size_id">
+        <label>Cut size</label>
+        <select name="cut_size_id">
           <option value="">— none —</option>
           {% for cs in cut_sizes %}
             <option value="{{ cs.id }}">{{ cs.name }}</option>
           {% endfor %}
         </select>
       </div>
-
-      <div class="field">
-        <label>Tags</label>
-        <div class="tag-grid">
-          {% for tag in tags %}
-            <input type="checkbox" id="tag_{{ tag.id }}" name="tag_ids" value="{{ tag.id }}" class="tag-option" />
-            <label for="tag_{{ tag.id }}" class="tag-label">{{ tag.name }}</label>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="description">Notes</label>
-        <textarea id="description" name="description" placeholder="Optional notes..."></textarea>
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <input type="text" name="description" placeholder="Optional notes..." />
+    </div>
+    {% if tags %}
+    <div class="field">
+      <label>Tags</label>
+      <div class="tag-grid">
+        {% for tag in tags %}
+          <input type="checkbox" name="tag_ids" value="{{ tag.id }}" id="tag-{{ tag.id }}" class="tag-option" />
+          <label for="tag-{{ tag.id }}" class="tag-label">{{ tag.name }}</label>
+        {% endfor %}
       </div>
     </div>
-
-    <div class="form-actions">
-      <button type="submit" class="btn btn-primary">create ingredient</button>
-      <a href="/ingredients" class="btn btn-ghost">cancel</a>
-    </div>
-  </form>
-</div>
+    {% endif %}
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">create ingredient</button>
+    <a href="/ingredients" class="btn btn-ghost">cancel</a>
+  </div>
+</form>
 {% endblock %}

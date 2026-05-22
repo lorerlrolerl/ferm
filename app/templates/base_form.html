@@ -1,0 +1,43 @@
+{#
+  base_form.html — Base for all new/edit form pages.
+
+  Variables to set in child template:
+    form_title    — e.g. "new ferment" or "edit ferment"
+    form_sub      — optional subtitle (e.g. category name for edit pages)
+    cancel_url    — where cancel button goes (default "/")
+    cancel_label  — default "cancel"
+    breadcrumb    — list of (label, url) tuples, last item has url=none
+                    e.g. [("Ferments", "/ferments"), ("New", none)]
+
+  Blocks:
+    {% block head %}        — extra styles/scripts
+    {% block form_content %}— the actual form fields
+    {% block form_actions %} — override submit/cancel buttons if needed
+#}
+{% extends "base.html" %}
+
+{% block head %}{% endblock %}
+
+{% block content %}
+<div class="form-wrap">
+
+  {% if breadcrumb %}
+  <div class="breadcrumb">
+    {% for label, url in breadcrumb %}
+      {% if url %}<a href="{{ url }}">{{ label }}</a><span class="breadcrumb-sep">/</span>
+      {% else %}<span>{{ label }}</span>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="page-title" style="margin-bottom:{% if form_sub %}4px{% else %}24px{% endif %};">
+    {% block form_title %}{% endblock %}
+  </div>
+  {% if form_sub %}
+    <div class="page-sub" style="margin-bottom:24px;">{% block form_sub %}{% endblock %}</div>
+  {% endif %}
+
+  {% block form_content %}{% endblock %}
+
+</div>
+{% endblock %}

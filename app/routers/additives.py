@@ -1,19 +1,23 @@
 from typing import Optional
-
 from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app.auth import require_user, require_editor, require_admin
 from app.database import get_db
 from app.models.additive import Additive, AdditiveType
+from app.models.ferment import BatchAdditive
 from app.models.user import User
 from app.templates import templates
 
 router = APIRouter(prefix="/additives")
 
 
-# ── List ───────────────────────────────────────────────────────────────────
+def _form_lookups(db: Session) -> dict:
+    return {
+        "additive_types": db.query(AdditiveType).order_by(AdditiveType.name).all(),
+    }
+
 
 @router.get("", response_class=HTMLResponse)
 def additives_list(
@@ -21,44 +25,34 @@ def additives_list(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
     q: Optional[str] = None,
-    additive_type: Optional[str] = None,
+    type_id: Optional[int] = None,
 ):
     query = db.query(Additive)
     if q:
         query = query.filter(Additive.name.ilike(f"%{q}%"))
-    if additive_type:
-        query = query.filter(Additive.additive_type == additive_type)
-
+    if type_id:
+        query = query.filter(Additive.additive_type_id == type_id)
     additives = query.order_by(Additive.name).all()
+    additive_types = db.query(AdditiveType).order_by(AdditiveType.name).all()
+    return templates.TemplateResponse(request, "additives/list.html", {
+        "current_user": current_user,
+        "additives": additives,
+        "additive_types": additive_types,
+        "filters": {"q": q or "", "type_id": type_id},
+    })
 
-    return templates.TemplateResponse(
-        request,
-        "additives/list.html",
-        {
-            "current_user": current_user,
-            "additives": additives,
-            "additive_types": [t.value for t in AdditiveType],
-            "filters": {"q": q or "", "additive_type": additive_type or ""},
-        },
-    )
-
-
-# ── New ────────────────────────────────────────────────────────────────────
 
 @router.get("/new", response_class=HTMLResponse)
 def additives_new(
     request: Request,
+    db: Session = Depends(get_db),
     current_user: User = Depends(require_editor),
 ):
-    return templates.TemplateResponse(
-        request,
-        "additives/new.html",
-        {
-            "current_user": current_user,
-            "additive_types": [t.value for t in AdditiveType],
-            "errors": {},
-        },
-    )
+    return templates.TemplateResponse(request, "additives/new.html", {
+        "current_user": current_user,
+        "errors": {},
+        **_form_lookups(db),
+    })
 
 
 @router.post("/new")
@@ -67,46 +61,33 @@ def additives_create(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_editor),
     name: str = Form(...),
-    additive_type: str = Form(...),
+    additive_type_id: Optional[int] = Form(None),
     description: Optional[str] = Form(None),
 ):
     errors = {}
     if not name.strip():
         errors["name"] = "Name is required."
-    if additive_type not in [t.value for t in AdditiveType]:
-        errors["additive_type"] = "Invalid type."
 
     existing = db.query(Additive).filter(
-        Additive.name.ilike(name.strip()),
-        Additive.additive_type == additive_type,
+        Additive.name == name.strip(),
+        Additive.additive_type_id == additive_type_id,
     ).first()
     if existing:
-        errors["name"] = f"'{name.strip()}' ({additive_type}) already exists."
+        errors["name"] = "An additive with this name and type already exists."
 
     if errors:
-        return templates.TemplateResponse(
-            request,
-            "additives/new.html",
-            {
-                "current_user": current_user,
-                "additive_types": [t.value for t in AdditiveType],
-                "errors": errors,
-            },
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        )
+        return templates.TemplateResponse(request, "additives/new.html", {
+            "current_user": current_user, "errors": errors, **_form_lookups(db),
+        }, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-    additive = Additive(
+    db.add(Additive(
         name=name.strip(),
-        additive_type=additive_type,
+        additive_type_id=additive_type_id or None,
         description=description or None,
-    )
-    db.add(additive)
+    ))
     db.commit()
-
     return RedirectResponse("/additives", status_code=status.HTTP_303_SEE_OTHER)
 
-
-# ── Edit ───────────────────────────────────────────────────────────────────
 
 @router.get("/{additive_id}/edit", response_class=HTMLResponse)
 def additives_edit(
@@ -115,70 +96,35 @@ def additives_edit(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_editor),
 ):
-    additive = db.query(Additive).filter(Additive.id == additive_id).first()
+    additive = db.query(Additive).filter_by(id=additive_id).first()
     if not additive:
         return RedirectResponse("/additives", status_code=status.HTTP_302_FOUND)
-
-    return templates.TemplateResponse(
-        request,
-        "additives/edit.html",
-        {
-            "current_user": current_user,
-            "additive": additive,
-            "additive_types": [t.value for t in AdditiveType],
-            "errors": {},
-        },
-    )
+    return templates.TemplateResponse(request, "additives/edit.html", {
+        "current_user": current_user,
+        "additive": additive,
+        "errors": {},
+        **_form_lookups(db),
+    })
 
 
 @router.post("/{additive_id}/edit")
 def additives_update(
     additive_id: int,
-    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_editor),
     name: str = Form(...),
-    additive_type: str = Form(...),
+    additive_type_id: Optional[int] = Form(None),
     description: Optional[str] = Form(None),
 ):
-    additive = db.query(Additive).filter(Additive.id == additive_id).first()
+    additive = db.query(Additive).filter_by(id=additive_id).first()
     if not additive:
         return RedirectResponse("/additives", status_code=status.HTTP_302_FOUND)
-
-    errors = {}
-    if not name.strip():
-        errors["name"] = "Name is required."
-
-    existing = db.query(Additive).filter(
-        Additive.name.ilike(name.strip()),
-        Additive.additive_type == additive_type,
-        Additive.id != additive_id,
-    ).first()
-    if existing:
-        errors["name"] = f"'{name.strip()}' ({additive_type}) already exists."
-
-    if errors:
-        return templates.TemplateResponse(
-            request,
-            "additives/edit.html",
-            {
-                "current_user": current_user,
-                "additive": additive,
-                "additive_types": [t.value for t in AdditiveType],
-                "errors": errors,
-            },
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        )
-
-    additive.name = name.strip()
-    additive.additive_type = additive_type
-    additive.description = description or None
+    additive.name             = name.strip()
+    additive.additive_type_id = additive_type_id or None
+    additive.description      = description or None
     db.commit()
-
     return RedirectResponse("/additives", status_code=status.HTTP_303_SEE_OTHER)
 
-
-# ── Delete ─────────────────────────────────────────────────────────────────
 
 @router.post("/{additive_id}/delete")
 def additives_delete(
@@ -186,22 +132,12 @@ def additives_delete(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    additive = (
-        db.query(Additive)
-        .options(joinedload(Additive.batch_additives))
-        .filter(Additive.id == additive_id)
-        .first()
-    )
+    additive = db.query(Additive).filter_by(id=additive_id).first()
     if not additive:
         return RedirectResponse("/additives", status_code=status.HTTP_302_FOUND)
-
-    if additive.is_in_use:
-        return RedirectResponse(
-            "/additives?error=in_use",
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-
+    in_use = db.query(BatchAdditive).filter_by(additive_id=additive_id).first()
+    if in_use:
+        return RedirectResponse("/additives?error=in_use", status_code=status.HTTP_302_FOUND)
     db.delete(additive)
     db.commit()
-
     return RedirectResponse("/additives", status_code=status.HTTP_303_SEE_OTHER)

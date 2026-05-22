@@ -1,5 +1,5 @@
 [project]
-name = "ferm"
+name = "fermlog"
 version = "0.1.0"
 description = "Professional fermentation kitchen tracker"
 requires-python = ">=3.13"

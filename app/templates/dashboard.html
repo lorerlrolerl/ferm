@@ -24,7 +24,7 @@
   }
   .kpi {
     background: #151412;
-    border: 0.5px solid #252421;
+    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 14px 16px;
   }
@@ -32,7 +32,7 @@
     font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: #4a4840;
+    color: var(--text-3);
     margin-bottom: 8px;
   }
   .kpi-value {
@@ -44,25 +44,9 @@
   .kpi-value.amber  { color: #c8a96e; }
   .kpi-value.green  { color: #4db88a; }
   .kpi-value.lime   { color: #a0c840; }
-  .kpi-value.muted  { color: #3a3830; }
+  .kpi-value.muted  { color: var(--text-2); }
 
   /* ── Section label ──────────────────────────────────────────────── */
-  .section-label {
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #4a4840;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .section-label::after {
-    content: '';
-    flex: 1;
-    height: 0.5px;
-    background: #1e1d1b;
-  }
 
   /* ── Ferment cards ──────────────────────────────────────────────── */
   .ferment-grid {
@@ -72,7 +56,7 @@
   }
   .ferment-card {
     background: #151412;
-    border: 0.5px solid #252421;
+    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 14px 16px;
     display: grid;
@@ -84,8 +68,8 @@
     color: inherit;
   }
   .ferment-card:hover {
-    border-color: #3a3830;
-    background: #1a1916;
+    border-color: var(--text-3);
+    background: var(--surface);
   }
   .ferment-name {
     font-family: Georgia, serif;
@@ -96,7 +80,7 @@
   }
   .ferment-meta {
     font-size: 10px;
-    color: #4a4840;
+    color: var(--text-2);
     margin-top: 3px;
     letter-spacing: 0.02em;
   }
@@ -107,23 +91,6 @@
     flex-wrap: wrap;
     align-items: center;
   }
-  .badge {
-    font-size: 9px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-weight: 500;
-  }
-  .badge-status-active   { background: #0a1e10; color: #4db88a; border: 0.5px solid #143020; }
-  .badge-status-stasis   { background: #2a1a00; color: #c8a96e; border: 0.5px solid #3a2800; }
-  .badge-status-ready    { background: #1e2a0a; color: #a0c840; border: 0.5px solid #2a3810; }
-  .badge-status-failed   { background: #2a0a0a; color: #e85858; border: 0.5px solid #3a1010; }
-  .badge-status-stopped  { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
-  .badge-status-default  { background: #1a1a1a; color: #6b6860; border: 0.5px solid #2a2a28; }
-
-  .badge-cat { background: #1a1a30; color: #8888c8; border: 0.5px solid #2a2a48; }
-  .badge-ongoing { background: #1a2a1a; color: #5a8a5a; border: 0.5px solid #243824; font-style: italic; }
 
   .ferment-right {
     display: flex;
@@ -134,60 +101,29 @@
   .ferment-age {
     font-family: Georgia, serif;
     font-size: 20px;
-    color: #3a3830;
+    color: var(--text-3);
     font-weight: 700;
     line-height: 1;
   }
+  .ferment-last-log {
+    font-size: 9px; color: var(--text-3); text-align: right;
+    letter-spacing: 0.04em; margin-bottom: 3px;
+  }
+  .ferment-last-log.stale { color: var(--orange); }
   .ferment-age span {
     font-family: 'DM Mono', 'Courier New', monospace;
     font-size: 9px;
-    color: #3a3830;
+    color: var(--text-3);
     font-weight: 400;
   }
   .ferment-stage {
     font-size: 9px;
-    color: #3a3830;
+    color: var(--text-3);
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
 
   /* ── Empty state ────────────────────────────────────────────────── */
-  .empty-state {
-    background: #151412;
-    border: 0.5px dashed #252421;
-    border-radius: 6px;
-    padding: 40px 24px;
-    text-align: center;
-  }
-  .empty-state-title {
-    font-family: Georgia, serif;
-    font-size: 15px;
-    color: #3a3830;
-    margin-bottom: 8px;
-    font-style: italic;
-  }
-  .empty-state-sub {
-    font-size: 11px;
-    color: #2a2a28;
-    margin-bottom: 16px;
-  }
-  .btn {
-    display: inline-block;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.15s;
-    text-decoration: none;
-  }
-  .btn-primary {
-    background: #c8a96e;
-    color: #111210;
-    font-weight: 600;
-  }
-  .btn-primary:hover { background: #d4b97e; }
 
   /* ── Sidebar ────────────────────────────────────────────────────── */
   .side-section { margin-bottom: 24px; }
@@ -195,7 +131,7 @@
   .alert-list { display: flex; flex-direction: column; gap: 6px; }
   .alert-item {
     background: #151412;
-    border: 0.5px solid #252421;
+    border: 1px solid var(--border);
     border-left: 2px solid #c8a96e;
     border-radius: 0 4px 4px 0;
     padding: 10px 12px;
@@ -207,12 +143,12 @@
     font-family: Georgia, serif;
     font-style: italic;
   }
-  .alert-meta { font-size: 10px; color: #4a4840; margin-top: 2px; }
+  .alert-meta { font-size: 10px; color: var(--text-2); margin-top: 2px; }
   .alert-due  { font-size: 10px; color: #e85858; margin-top: 2px; }
 
   .side-empty {
     font-size: 11px;
-    color: #2a2a28;
+    color: var(--text-3);
     font-style: italic;
     padding: 12px 0;
   }
@@ -230,7 +166,7 @@
   }
   .greeting-sub {
     font-size: 11px;
-    color: #3a3830;
+    color: var(--text-2);
     letter-spacing: 0.04em;
   }
 </style>
@@ -244,7 +180,7 @@
 
     <!-- Greeting -->
     <div class="greeting">
-      <div class="greeting-title">good morning, {{ current_user.username }}.</div>
+      <div class="greeting-title">{{ greeting }}, {{ current_user.username }}.</div>
       <div class="greeting-sub">{{ now.strftime("%A, %d %B %Y") }}</div>
     </div>
 
@@ -274,6 +210,11 @@
     {% if ferment_data %}
     <div class="ferment-grid">
       {% for item in ferment_data %}
+        {% if item.ferment.status and item.ferment.status.name == 'stasis' and loop.changed(item.ferment.status.name) %}
+          <div style="grid-column:1/-1; border-top:1px solid var(--border-soft); margin:4px 0 8px; padding-top:8px;">
+            <span style="font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-3);">in stasis</span>
+          </div>
+        {% endif %}
       {% set f = item.ferment %}
       {% set batch = item.latest_batch %}
       <a href="/ferments/{{ f.id }}" class="ferment-card">
@@ -310,6 +251,11 @@
           {% if item.age_days is not none %}
             <div class="ferment-age">
               {{ item.age_days }}<span> days</span>
+            </div>
+          {% endif %}
+          {% if item.days_since_log is not none %}
+            <div class="ferment-last-log {% if item.days_since_log > 14 %}stale{% endif %}">
+              log {{ item.days_since_log }}d ago
             </div>
           {% endif %}
           {% if batch and batch.status %}

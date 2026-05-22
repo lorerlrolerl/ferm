@@ -1,11 +1,12 @@
 """
 Database backup utility.
-Creates a timestamped copy of ferm.db in a backups/ directory.
+Creates a timestamped copy of the database in a backups/ directory.
 
 Usage:
     uv run python -m app.backup           # backup
     uv run python -m app.backup restore   # list and restore
 """
+
 import shutil
 import sys
 from datetime import datetime
@@ -24,7 +25,7 @@ def backup():
 
     BACKUP_DIR.mkdir(exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    dest = BACKUP_DIR / f"ferm_{timestamp}.db"
+    dest = BACKUP_DIR / f"fermlog_{timestamp}.db"
     shutil.copy2(db_path, dest)
     size = dest.stat().st_size / 1024
     print(f"✓ Backup saved: {dest} ({size:.1f} KB)")
@@ -34,7 +35,7 @@ def list_backups():
     if not BACKUP_DIR.exists():
         print("No backups directory found.")
         return []
-    backups = sorted(BACKUP_DIR.glob("ferm_*.db"), reverse=True)
+    backups = sorted(BACKUP_DIR.glob("fermlog_*.db"), reverse=True)
     if not backups:
         print("No backups found.")
         return []
@@ -64,7 +65,7 @@ def restore():
     # Auto-backup current db before restoring
     if db_path.exists():
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        pre = BACKUP_DIR / f"ferm_pre_restore_{ts}.db"
+        pre = BACKUP_DIR / f"fermlog_pre_restore_{ts}.db"
         shutil.copy2(db_path, pre)
         print(f"  Current db backed up to: {pre.name}")
 

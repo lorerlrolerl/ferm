@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import require_admin
 from app.database import get_db
+from app.models.additive import AdditiveType
 from app.models.lookup import (
     Category, Status, CutSize, Tag,
     SmellDescriptor, VisualDescriptor,
@@ -48,6 +49,15 @@ def _visual_usage(db, vid):
 
 def _vessel_type_usage(db, vid):
     return {"containers": db.query(Container).filter_by(vessel_type_id=vid).count()}
+
+def _additive_type_usage(db, atid):
+    from app.models.additive import Additive
+    return {"additives": db.query(Additive).filter_by(additive_type_id=atid).count()}
+
+def _additive_type_names(db, atid):
+    from app.models.additive import Additive
+    items = db.query(Additive).filter_by(additive_type_id=atid).all()
+    return {"additives": [{"name": a.name, "url": f"/additives/{a.id}/edit"} for a in items]}
 
 def _vessel_material_usage(db, vid):
     return {"containers": db.query(Container).filter_by(vessel_material_id=vid).count()}
@@ -103,20 +113,20 @@ def _vessel_material_names(db, vid):
 
 # ── Model registry ─────────────────────────────────────────────────────────
 
-MODELS     = {"statuses": Status, "categories": Category, "cut_sizes": CutSize,
+MODELS     = {"additive_types": AdditiveType, "statuses": Status, "categories": Category, "cut_sizes": CutSize,
               "tags": Tag, "smell_descriptors": SmellDescriptor,
               "visual_descriptors": VisualDescriptor, "vessel_types": VesselType,
               "vessel_materials": VesselMaterial}
-USAGE_FNS  = {"statuses": _status_usage, "categories": _category_usage,
+USAGE_FNS  = {"additive_types": _additive_type_usage, "statuses": _status_usage, "categories": _category_usage,
               "cut_sizes": _cut_size_usage, "tags": _tag_usage,
               "smell_descriptors": _smell_usage, "visual_descriptors": _visual_usage,
               "vessel_types": _vessel_type_usage, "vessel_materials": _vessel_material_usage}
-NAME_FNS   = {"statuses": _status_names, "categories": _category_names,
+NAME_FNS   = {"additive_types": _additive_type_names, "statuses": _status_names, "categories": _category_names,
               "cut_sizes": _cut_size_names, "tags": _tag_names,
               "smell_descriptors": _smell_names, "visual_descriptors": _visual_names,
               "vessel_types": _vessel_type_names, "vessel_materials": _vessel_material_names}
 HAS_COLOR  = {"statuses"}
-HAS_DESC   = {"statuses", "categories", "cut_sizes"}
+HAS_DESC   = {"additive_types", "statuses", "categories", "cut_sizes"}
 
 
 def _redirect(section, msg=None):
@@ -140,6 +150,7 @@ def settings_page(
         return [{"item": i, "usage": ufn(db, i.id), "total": _total(ufn(db, i.id))} for i in items]
 
     data = {
+        "additive_types":    with_usage(db.query(AdditiveType).order_by(AdditiveType.name).all(), _additive_type_usage),
         "statuses":          with_usage(db.query(Status).order_by(Status.name).all(),           _status_usage),
         "categories":        with_usage(db.query(Category).order_by(Category.name).all(),       _category_usage),
         "cut_sizes":         with_usage(db.query(CutSize).order_by(CutSize.name).all(),         _cut_size_usage),
@@ -212,6 +223,15 @@ def lookup_edit(
     item = db.query(model).filter_by(id=item_id).first()
     if not item:
         return _redirect(table)
+
+    # Check for duplicate name — exclude current item
+    duplicate = db.query(model).filter(
+        model.name == name.strip(),
+        model.id != item_id,
+    ).first()
+    if duplicate:
+        return _redirect(table, "duplicate")
+
     item.name = name.strip()
     if table in HAS_DESC:
         item.description = description or None
