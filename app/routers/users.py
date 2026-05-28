@@ -34,11 +34,34 @@ def users_list(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
+    q: Optional[str] = None,
+    sort: Optional[str] = None,
+    dir: Optional[str] = None,
 ):
-    users = db.query(User).order_by(User.username).all()
+    sort_by  = sort or "username"
+    sort_dir = dir  or "asc"
+
+    query = db.query(User)
+    if q:
+        query = query.filter(User.username.ilike(f"%{q}%") | User.email.ilike(f"%{q}%"))
+
+    sort_map = {
+        "username": User.username,
+        "email":    User.email,
+        "role":     User.role,
+        "status":   User.is_active,
+        "created":  User.created_at,
+    }
+    col = sort_map.get(sort_by, User.username)
+    query = query.order_by(col.asc() if sort_dir == "asc" else col.desc())
+    users = query.all()
+
     return templates.TemplateResponse(request, "users/list.html", {
         "current_user": current_user,
         "users": users,
+        "q": q or "",
+        "sort": sort_by,
+        "dir": sort_dir,
     })
 
 

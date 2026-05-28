@@ -42,10 +42,13 @@ def ferments_list(
     category_id: Optional[str] = None,
     status_id: Optional[str] = None,
     q: Optional[str] = None,
+    sort: Optional[str] = None,
+    dir: Optional[str] = None,
 ):
-    # Coerce empty strings to None
-    cat_id  = int(category_id) if category_id and category_id.strip() else None
-    stat_id = int(status_id)   if status_id   and status_id.strip()   else None
+    cat_id   = int(category_id) if category_id and category_id.strip() else None
+    stat_id  = int(status_id)   if status_id   and status_id.strip()   else None
+    sort_by  = sort or "created"
+    sort_dir = dir  or "desc"
 
     query = (
         db.query(Ferment)
@@ -63,8 +66,30 @@ def ferments_list(
     if q:
         query = query.filter(Ferment.name.ilike(f"%{q}%"))
 
+    from app.models.lookup import Category as CatModel, Status as StatModel
+    from sqlalchemy import func as sqlfunc, outerjoin
 
-    ferments = query.order_by(Ferment.created_at.desc()).all()
+    # Columns that need joins
+    if sort_by == "name":
+        col = Ferment.name
+        query = query.order_by(col.asc() if sort_dir == "asc" else col.desc())
+    elif sort_by == "category":
+        query = query.outerjoin(CatModel, Ferment.category_id == CatModel.id)
+        query = query.order_by(CatModel.name.asc() if sort_dir == "asc" else CatModel.name.desc())
+    elif sort_by == "status":
+        query = query.outerjoin(StatModel, Ferment.status_id == StatModel.id)
+        query = query.order_by(StatModel.name.asc() if sort_dir == "asc" else StatModel.name.desc())
+    elif sort_by == "batches":
+        # Sort in Python after fetching
+        query = query.order_by(Ferment.created_at.desc())
+    elif sort_by == "age":
+        # Sort in Python after computing age
+        query = query.order_by(Ferment.created_at.desc())
+    else:
+        # Default: created
+        query = query.order_by(Ferment.created_at.asc() if sort_dir == "asc" else Ferment.created_at.desc())
+
+    ferments = query.all()
 
     # Compute active age for each ferment:
     # days from created_at to last log entry, or to now if still active
@@ -93,6 +118,14 @@ def ferments_list(
             "is_active": is_active,
         }
 
+    # Python-side sort for computed columns
+    if sort_by == "batches":
+        ferments = sorted(ferments, key=lambda f: len(f.batches),
+                         reverse=(sort_dir == "desc"))
+    elif sort_by == "age":
+        ferments = sorted(ferments, key=lambda f: ferment_ages.get(f.id, {}).get("days", 0),
+                         reverse=(sort_dir == "desc"))
+
     return templates.TemplateResponse(
         request,
         "ferments/list.html",
@@ -103,6 +136,8 @@ def ferments_list(
             "categories": db.query(Category).order_by(Category.name).all(),
             "statuses": db.query(Status).order_by(Status.name).all(),
             "filters": {"category_id": cat_id, "status_id": stat_id, "q": q or ""},
+            "sort": sort_by,
+            "dir": sort_dir,
         },
     )
 

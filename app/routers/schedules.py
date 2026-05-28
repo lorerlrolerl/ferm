@@ -69,10 +69,10 @@ def schedules_list(
     if target_type:
         query = query.filter(Schedule.target_type == target_type)
 
+    # Default: overdue/due first, then by next_due_at
     schedules = query.order_by(Schedule.next_due_at.asc().nullslast()).all()
     now = _now()
 
-    # Attach resolved target names
     enriched = []
     for s in schedules:
         enriched.append({
@@ -82,12 +82,30 @@ def schedules_list(
             "days_until": (s.next_due_at - now).days if s.next_due_at else None,
         })
 
+    # Python sort for enriched fields
+    sort_by  = getattr(request, 'query_params', {}).get('sort', 'due') if hasattr(request, 'query_params') else 'due'
+    sort_dir = getattr(request, 'query_params', {}).get('dir', 'asc')  if hasattr(request, 'query_params') else 'asc'
+
+    sort_by  = request.query_params.get('sort', 'due')
+    sort_dir = request.query_params.get('dir',  'asc')
+
+    sort_key_map = {
+        "name":   lambda x: x["schedule"].name.lower(),
+        "type":   lambda x: x["schedule"].target_type.lower(),
+        "target": lambda x: x["target_name"].lower(),
+        "due":    lambda x: x["schedule"].next_due_at or datetime(9999,1,1),
+    }
+    key_fn = sort_key_map.get(sort_by, sort_key_map["due"])
+    enriched = sorted(enriched, key=key_fn, reverse=(sort_dir == "desc"))
+
     return templates.TemplateResponse(request, "schedules/list.html", {
         "current_user": current_user,
         "enriched": enriched,
         "now": now,
         "target_types": TARGET_TYPES,
         "filters": {"target_type": target_type or "", "show_inactive": show_inactive},
+        "sort": sort_by,
+        "dir": sort_dir,
     })
 
 

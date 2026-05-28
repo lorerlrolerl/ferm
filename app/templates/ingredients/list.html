@@ -5,10 +5,19 @@
 {% block page_title %}ingredients{% endblock %}
 {% block page_sub %}{{ ingredients | length }} ingredient{{ 's' if ingredients | length != 1 }}{% endblock %}
 
+{% block head %}
+<style>
+  .th-sort { text-decoration:none; color:inherit; display:block; }
+  .th-sort:hover { color: var(--text-2); }
+  th.active-sort { color: var(--accent); }
+  .sort-icon { font-size:10px; margin-left:3px; opacity:0.7; }
+</style>
+{% endblock %}
+
 {% block filters %}
+{% set base = "?q=" ~ filters.q ~ "&tag_id=" ~ (filters.tag_id or '') ~ "&cut_size_id=" ~ (filters.cut_size_id or '') %}
 <form method="get" action="/ingredients" class="filters">
-  <input type="text" name="q" class="filter-input" placeholder="search ingredients..."
-    value="{{ filters.q }}" />
+  <input type="text" name="q" class="filter-input" placeholder="search ingredients..." value="{{ filters.q }}" />
   <select name="tag_id" class="filter-select">
     <option value="">all tags</option>
     {% for tag in tags %}
@@ -21,36 +30,43 @@
       <option value="{{ cs.id }}" {% if filters.cut_size_id == cs.id %}selected{% endif %}>{{ cs.name }}</option>
     {% endfor %}
   </select>
+  <input type="hidden" name="sort" value="{{ sort }}" />
+  <input type="hidden" name="dir" value="{{ dir }}" />
   <button type="submit" class="btn-filter">filter</button>
   {% if filters.q or filters.tag_id or filters.cut_size_id %}
-    <a href="/ingredients" class="btn-filter">clear</a>
+    <a href="/ingredients?sort={{ sort }}&dir={{ dir }}" class="btn-filter">clear</a>
   {% endif %}
 </form>
 {% endblock %}
 
 {% block list_content %}
+{% set base = "?q=" ~ filters.q ~ "&tag_id=" ~ (filters.tag_id or '') ~ "&cut_size_id=" ~ (filters.cut_size_id or '') %}
 {% if ingredients %}
 <table class="data-table">
   <thead>
-    <tr><th>Name</th><th>Cut size</th><th>Tags</th><th></th></tr>
+    <tr>
+      <th class="{{ 'active-sort' if sort == 'name' }}">
+        <a href="{{ base }}&sort=name&dir={{ 'asc' if sort == 'name' and dir == 'desc' else 'desc' }}" class="th-sort">Name <span class="sort-icon">{{ '↑' if sort == 'name' and dir == 'asc' else '↓' if sort == 'name' else '↕' }}</span></a>
+      </th>
+      <th class="{{ 'active-sort' if sort == 'cut_size' }}">
+        <a href="{{ base }}&sort=cut_size&dir={{ 'asc' if sort == 'cut_size' and dir == 'desc' else 'desc' }}" class="th-sort">Cut size <span class="sort-icon">{{ '↑' if sort == 'cut_size' and dir == 'asc' else '↓' if sort == 'cut_size' else '↕' }}</span></a>
+      </th>
+      <th>Tags</th>
+      <th></th>
+    </tr>
   </thead>
   <tbody>
     {% for ing in ingredients %}
     <tr>
       <td class="td-name">{{ ing.name }}</td>
       <td class="td-sub">{{ ing.cut_size.name if ing.cut_size else '—' }}</td>
-      <td>
-        {% for tag in ing.tags %}
-          <span class="badge badge-cat" style="margin-right:3px;">{{ tag.name }}</span>
-        {% endfor %}
-      </td>
+      <td>{% for tag in ing.tags %}<span class="badge badge-cat" style="margin-right:3px;">{{ tag.name }}</span>{% endfor %}</td>
       <td style="text-align:right;white-space:nowrap;">
         {% if current_user.role.value in ['admin','editor'] %}
           <a href="/ingredients/{{ ing.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>
         {% endif %}
         {% if current_user.role.value == 'admin' %}
-          <form method="post" action="/ingredients/{{ ing.id }}/delete" style="display:inline;"
-            onsubmit="return confirm('Delete {{ ing.name }}?')">
+          <form method="post" action="/ingredients/{{ ing.id }}/delete" style="display:inline;" onsubmit="return confirm('Delete {{ ing.name }}?')">
             <button type="submit" class="btn btn-danger">delete</button>
           </form>
         {% endif %}
@@ -62,14 +78,8 @@
 {% else %}
 <div class="empty-state">
   <div class="empty-state-title">no ingredients found.</div>
-  {% if filters.q or filters.tag_id or filters.cut_size_id %}
-    <div class="empty-state-sub">try adjusting your filters.</div>
-    <a href="/ingredients" class="btn btn-ghost btn-sm">clear filters</a>
-  {% else %}
-    <div class="empty-state-sub">add cabbage, water, tea leaves, and other ingredients.</div>
-    {% if current_user.role.value in ['admin','editor'] %}
-      <a href="/ingredients/new" class="btn btn-primary">+ new ingredient</a>
-    {% endif %}
+  {% if filters.q or filters.tag_id or filters.cut_size_id %}<div class="empty-state-sub">try adjusting your filters.</div><a href="/ingredients" class="btn btn-ghost btn-sm">clear</a>
+  {% else %}<div class="empty-state-sub">add cabbage, water, tea leaves, and other ingredients.</div>{% if current_user.role.value in ['admin','editor'] %}<a href="/ingredients/new" class="btn btn-primary">+ new ingredient</a>{% endif %}
   {% endif %}
 </div>
 {% endif %}

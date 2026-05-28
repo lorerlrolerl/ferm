@@ -7,7 +7,11 @@
 
 {% block head %}
 <style>
-  .wrap { max-width: 1000px; }
+  .wrap { max-width: 1020px; }
+  .th-sort { text-decoration: none; color: inherit; display: block; }
+  .th-sort:hover { color: var(--text-2); }
+  th.active-sort { color: var(--accent); }
+  .sort-icon { font-size: 10px; margin-left: 3px; opacity: 0.7; }
 </style>
 {% endblock %}
 
@@ -27,24 +31,31 @@
       <option value="{{ st.id }}" {% if filters.status_id == st.id %}selected{% endif %}>{{ st.name }}</option>
     {% endfor %}
   </select>
+  <input type="hidden" name="sort" value="{{ sort }}" />
+  <input type="hidden" name="dir" value="{{ dir }}" />
   <button type="submit" class="btn-filter">filter</button>
   {% if filters.q or filters.category_id or filters.status_id %}
-    <a href="/ferments" class="btn-filter">clear</a>
+    <a href="/ferments?sort={{ sort }}&dir={{ dir }}" class="btn-filter">clear</a>
   {% endif %}
 </form>
 {% endblock %}
 
 {% block list_content %}
 {% if ferments %}
+
+{# Build base URL preserving current filters #}
+{% set base = "?q=" ~ filters.q ~ "&category_id=" ~ (filters.category_id or '') ~ "&status_id=" ~ (filters.status_id or '') %}
+
 <table class="data-table">
   <thead>
     <tr>
-      <th>Name</th>
-      <th>Category</th>
-      <th>Status</th>
-      <th>Batches</th>
-      <th>Created</th>
-      <th>Age</th>
+      {% for col_key, col_label in [("name","Name"),("category","Category"),("status","Status"),("batches","Batches"),("created","Created"),("age","Age")] %}
+      <th class="{{ 'active-sort' if sort == col_key }}">
+        <a href="{{ base }}&sort={{ col_key }}&dir={{ 'asc' if sort == col_key and dir == 'desc' else 'desc' }}" class="th-sort">
+          {{ col_label }} <span class="sort-icon">{% if sort == col_key %}{{ '↑' if dir == 'asc' else '↓' }}{% else %}↕{% endif %}</span>
+        </a>
+      </th>
+      {% endfor %}
       <th></th>
     </tr>
   </thead>
@@ -71,12 +82,8 @@
       <td>
         {% set age = ferment_ages.get(f.id) %}
         {% if age %}
-          <span style="font-size:11px; color:{{ 'var(--green)' if age.is_active else 'var(--text-3)' }}; font-family:monospace;">
-            {{ age.days }}d
-          </span>
-          {% if not age.is_active %}
-            <div style="font-size:9px; color:var(--text-3);">ended</div>
-          {% endif %}
+          <span style="font-size:11px; color:{{ 'var(--green)' if age.is_active else 'var(--text-3)' }}; font-family:monospace;">{{ age.days }}d</span>
+          {% if not age.is_active %}<div style="font-size:9px; color:var(--text-3);">ended</div>{% endif %}
         {% else %}—{% endif %}
       </td>
       <td style="text-align:right; white-space:nowrap;">
@@ -88,6 +95,7 @@
     {% endfor %}
   </tbody>
 </table>
+
 {% else %}
 <div class="empty-state">
   <div class="empty-state-title">no ferments found.</div>

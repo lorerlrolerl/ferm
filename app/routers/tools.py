@@ -17,11 +17,28 @@ def tools_list(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
+    q: Optional[str] = None,
+    sort: Optional[str] = None,
+    dir: Optional[str] = None,
 ):
-    tools = db.query(Tool).order_by(Tool.name).all()
+    sort_by  = sort or "name"
+    sort_dir = dir  or "asc"
+
+    query = db.query(Tool)
+    if q:
+        query = query.filter(Tool.name.ilike(f"%{q}%"))
+
+    sort_map = {"name": Tool.name, "type": Tool.tool_type}
+    col = sort_map.get(sort_by, Tool.name)
+    query = query.order_by(col.asc() if sort_dir == "asc" else col.desc())
+    tools = query.all()
+
     return templates.TemplateResponse(request, "tools/list.html", {
         "current_user": current_user,
         "tools": tools,
+        "q": q or "",
+        "sort": sort_by,
+        "dir": sort_dir,
     })
 
 

@@ -1,37 +1,37 @@
 {% extends "base_list.html" %}
-{% set new_url = "/schedules/new" %}
-{% set new_label = "new schedule" %}
 
 {% block page_title %}schedules{% endblock %}
 {% block page_sub %}{{ enriched | length }} shown{% endblock %}
 
 {% block head %}
 <style>
-  .wrap { max-width: 1000px; }
-  .overdue-row td  { background: var(--red-bg) !important; }
-  .due-today-row td{ background: var(--accent-bg) !important; }
-  .days-overdue { color: var(--red); font-weight: 600; font-size: 10px; }
-  .days-soon    { color: var(--accent); font-size: 10px; }
-  .days-ok      { color: var(--text-3); font-size: 10px; }
-  .target-badge {
-    font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 2px 7px; border-radius: 3px;
-  }
-  .tt-ferment   { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border); }
-  .tt-batch     { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border); }
-  .tt-container { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
-  .tt-tool      { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
-  .complete-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .complete-form input[type="datetime-local"] {
-    background: var(--surface-2); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 4px 8px; font-size: 11px;
-    font-family: inherit; color: var(--text); outline: none;
-  }
-  .interval-badge { font-size: 10px; color: var(--text-3); font-family: monospace; }
+  .overdue-row td { background: var(--red-bg) !important; }
+  .due-today-row td { background: var(--accent-bg) !important; }
+  .days-overdue { color: var(--red); font-weight:600; }
+  .days-soon    { color: var(--accent); }
+  .days-ok      { color: var(--text-3); }
+  .target-type-badge { font-size:9px; letter-spacing:0.06em; text-transform:uppercase; padding:2px 7px; border-radius:3px; }
+  .tt-ferment   { background:var(--green-bg); color:var(--green); border:1px solid var(--green-border); }
+  .tt-batch     { background:var(--blue-bg); color:var(--blue); border:1px solid var(--blue-border); }
+  .tt-container { background:var(--accent-bg); color:var(--accent); border:1px solid var(--accent-dim); }
+  .tt-tool      { background:var(--surface-2); color:var(--text-2); border:1px solid var(--border); }
+  .complete-form { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .complete-form input[type="datetime-local"] { background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius); padding:4px 8px; font-size:11px; font-family:inherit; color:var(--text); outline:none; }
+  .th-sort { text-decoration:none; color:inherit; display:block; }
+  .th-sort:hover { color:var(--text-2); }
+  th.active-sort { color:var(--accent); }
+  .sort-icon { font-size:10px; margin-left:3px; opacity:0.7; }
 </style>
 {% endblock %}
 
+{% block page_action %}
+{% if current_user.role.value in ['admin','editor'] %}
+  <a href="/schedules/new" class="btn btn-primary">+ new schedule</a>
+{% endif %}
+{% endblock %}
+
 {% block filters %}
+{% set base = "?target_type=" ~ filters.target_type ~ "&show_inactive=" ~ filters.show_inactive %}
 <form method="get" action="/schedules" class="filters">
   <select name="target_type" class="filter-select">
     <option value="">all types</option>
@@ -43,17 +43,37 @@
     <input type="checkbox" name="show_inactive" value="true" {% if filters.show_inactive %}checked{% endif %} style="accent-color:var(--accent);" />
     show inactive
   </label>
+  <input type="hidden" name="sort" value="{{ sort }}" />
+  <input type="hidden" name="dir" value="{{ dir }}" />
   <button type="submit" class="btn-filter">filter</button>
-  {% if filters.target_type or filters.show_inactive %}<a href="/schedules" class="btn-filter">clear</a>{% endif %}
+  {% if filters.target_type or filters.show_inactive %}
+    <a href="/schedules?sort={{ sort }}&dir={{ dir }}" class="btn-filter">clear</a>
+  {% endif %}
 </form>
 {% endblock %}
 
 {% block list_content %}
+{% set base = "?target_type=" ~ filters.target_type ~ "&show_inactive=" ~ filters.show_inactive %}
 {% if enriched %}
 <table class="data-table">
   <thead>
-    <tr><th>Schedule</th><th>Attached to</th><th>Interval</th><th>Next due</th><th>Status</th>
-    {% if current_user.role.value in ['admin','editor'] %}<th>Complete</th><th></th>{% endif %}</tr>
+    <tr>
+      <th class="{{ 'active-sort' if sort == 'name' }}">
+        <a href="{{ base }}&sort=name&dir={{ 'asc' if sort == 'name' and dir == 'desc' else 'desc' }}" class="th-sort">Schedule <span class="sort-icon">{{ '↑' if sort == 'name' and dir == 'asc' else '↓' if sort == 'name' else '↕' }}</span></a>
+      </th>
+      <th class="{{ 'active-sort' if sort == 'type' }}">
+        <a href="{{ base }}&sort=type&dir={{ 'asc' if sort == 'type' and dir == 'desc' else 'desc' }}" class="th-sort">Attached to <span class="sort-icon">{{ '↑' if sort == 'type' and dir == 'asc' else '↓' if sort == 'type' else '↕' }}</span></a>
+      </th>
+      <th class="{{ 'active-sort' if sort == 'target' }}">
+        <a href="{{ base }}&sort=target&dir={{ 'asc' if sort == 'target' and dir == 'desc' else 'desc' }}" class="th-sort">Target <span class="sort-icon">{{ '↑' if sort == 'target' and dir == 'asc' else '↓' if sort == 'target' else '↕' }}</span></a>
+      </th>
+      <th>Interval</th>
+      <th class="{{ 'active-sort' if sort == 'due' }}">
+        <a href="{{ base }}&sort=due&dir={{ 'asc' if sort == 'due' and dir == 'desc' else 'desc' }}" class="th-sort">Next due <span class="sort-icon">{{ '↑' if sort == 'due' and dir == 'asc' else '↓' if sort == 'due' else '↕' }}</span></a>
+      </th>
+      <th>Status</th>
+      {% if current_user.role.value in ['admin','editor'] %}<th>Complete</th><th></th>{% endif %}
+    </tr>
   </thead>
   <tbody>
     {% for item in enriched %}
@@ -65,28 +85,25 @@
         <div class="td-name"><a href="/schedules/{{ s.id }}">{{ s.name }}</a></div>
         {% if s.description %}<div class="td-sub">{{ s.description }}</div>{% endif %}
       </td>
+      <td><span class="target-type-badge tt-{{ s.target_type }}">{{ s.target_type }}</span></td>
+      <td class="td-sub">{{ item.target_name }}</td>
       <td>
-        <span class="target-badge tt-{{ s.target_type }}">{{ s.target_type }}</span>
-        <div class="td-sub" style="margin-top:3px;">{{ item.target_name }}</div>
-      </td>
-      <td>
-        {% if s.interval_days %}
-          <span class="interval-badge">every {{ s.interval_days | int }} day{{ 's' if s.interval_days != 1 }}</span>
-        {% else %}<span class="td-muted">one-off</span>{% endif %}
+        {% if s.interval_days %}<span style="font-size:10px;color:var(--text-3);font-family:monospace;">every {{ s.interval_days | int }}d</span>
+        {% else %}<span class="td-sub">one-off</span>{% endif %}
       </td>
       <td>
         {% if s.next_due_at %}
-          <div style="font-size:12px;">{{ s.next_due_at.strftime("%d %b %Y") }}</div>
-          <div class="{{ 'days-overdue' if overdue else ('days-soon' if item.days_until <= 2 else 'days-ok') }}">
-            {% if overdue %}{{ (now - s.next_due_at).days }} day{{ 's' if (now - s.next_due_at).days != 1 }} overdue
+          <div>{{ s.next_due_at.strftime("%d %b %Y") }}</div>
+          <div class="{{ 'days-overdue' if overdue else ('days-soon' if item.days_until is not none and item.days_until <= 2 else 'days-ok') }}">
+            {% if overdue %}{{ (now - s.next_due_at).days }}d overdue
             {% elif item.days_until == 0 %}today
             {% elif item.days_until == 1 %}tomorrow
-            {% else %}in {{ item.days_until }} days{% endif %}
+            {% elif item.days_until is not none %}in {{ item.days_until }}d{% endif %}
           </div>
-        {% else %}<span class="td-muted">—</span>{% endif %}
+        {% else %}<span class="td-sub">—</span>{% endif %}
       </td>
       <td>
-        {% if not s.is_active %}<span class="td-muted">inactive</span>
+        {% if not s.is_active %}<span class="td-sub">inactive</span>
         {% elif overdue %}<span style="color:var(--red);font-size:10px;">overdue</span>
         {% elif due_today %}<span style="color:var(--accent);font-size:10px;">due today</span>
         {% else %}<span style="color:var(--green);font-size:10px;">on track</span>{% endif %}
@@ -102,8 +119,7 @@
       </td>
       <td style="text-align:right;white-space:nowrap;">
         <a href="/schedules/{{ s.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>
-        <form method="post" action="/schedules/{{ s.id }}/delete" style="display:inline;"
-          onsubmit="return confirm('Delete this schedule?')">
+        <form method="post" action="/schedules/{{ s.id }}/delete" style="display:inline;" onsubmit="return confirm('Delete this schedule?')">
           <button type="submit" class="btn btn-danger">×</button>
         </form>
       </td>
@@ -114,11 +130,9 @@
 </table>
 {% else %}
 <div class="empty-state">
-  <div class="empty-state-title">no schedules yet.</div>
+  <div class="empty-state-title">no schedules found.</div>
   <div class="empty-state-sub">add feeding schedules, maintenance reminders, and tool calibrations.</div>
-  {% if current_user.role.value in ['admin','editor'] %}
-    <a href="/schedules/new" class="btn btn-primary">+ new schedule</a>
-  {% endif %}
+  {% if current_user.role.value in ['admin','editor'] %}<a href="/schedules/new" class="btn btn-primary">+ new schedule</a>{% endif %}
 </div>
 {% endif %}
 {% endblock %}

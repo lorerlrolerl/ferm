@@ -7,36 +7,45 @@
 
 {% block head %}
 <style>
-  .type-badge {
-    font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 2px 8px; border-radius: 3px; display: inline-block;
-    background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border);
-  }
+  .type-badge { font-size:9px; letter-spacing:0.06em; text-transform:uppercase; padding:2px 8px; border-radius:3px; display:inline-block; background:var(--surface-2); color:var(--text-2); border:1px solid var(--border); }
+  .th-sort { text-decoration:none; color:inherit; display:block; }
+  .th-sort:hover { color: var(--text-2); }
+  th.active-sort { color: var(--accent); }
+  .sort-icon { font-size:10px; margin-left:3px; opacity:0.7; }
 </style>
 {% endblock %}
 
 {% block filters %}
 <form method="get" action="/additives" class="filters">
-  <input type="text" name="q" class="filter-input" placeholder="search additives..."
-    value="{{ filters.q }}" />
+  <input type="text" name="q" class="filter-input" placeholder="search additives..." value="{{ filters.q }}" />
   <select name="type_id" class="filter-select">
     <option value="">all types</option>
     {% for t in additive_types %}
       <option value="{{ t.id }}" {% if filters.type_id == t.id %}selected{% endif %}>{{ t.name }}</option>
     {% endfor %}
   </select>
+  <input type="hidden" name="sort" value="{{ sort }}" />
+  <input type="hidden" name="dir" value="{{ dir }}" />
   <button type="submit" class="btn-filter">filter</button>
-  {% if filters.q or filters.type_id %}
-    <a href="/additives" class="btn-filter">clear</a>
-  {% endif %}
+  {% if filters.q or filters.type_id %}<a href="/additives?sort={{ sort }}&dir={{ dir }}" class="btn-filter">clear</a>{% endif %}
 </form>
 {% endblock %}
 
 {% block list_content %}
+{% set base = "?q=" ~ filters.q ~ "&type_id=" ~ (filters.type_id or '') %}
 {% if additives %}
 <table class="data-table">
   <thead>
-    <tr><th>Name</th><th>Type</th><th>Description</th><th></th></tr>
+    <tr>
+      <th class="{{ 'active-sort' if sort == 'name' }}">
+        <a href="{{ base }}&sort=name&dir={{ 'asc' if sort == 'name' and dir == 'desc' else 'desc' }}" class="th-sort">Name <span class="sort-icon">{{ '↑' if sort == 'name' and dir == 'asc' else '↓' if sort == 'name' else '↕' }}</span></a>
+      </th>
+      <th class="{{ 'active-sort' if sort == 'type' }}">
+        <a href="{{ base }}&sort=type&dir={{ 'asc' if sort == 'type' and dir == 'desc' else 'desc' }}" class="th-sort">Type <span class="sort-icon">{{ '↑' if sort == 'type' and dir == 'asc' else '↓' if sort == 'type' else '↕' }}</span></a>
+      </th>
+      <th>Description</th>
+      <th></th>
+    </tr>
   </thead>
   <tbody>
     {% for a in additives %}
@@ -45,14 +54,9 @@
       <td><span class="type-badge">{{ a.additive_type_name }}</span></td>
       <td class="td-sub">{{ a.description or '—' }}</td>
       <td style="text-align:right;white-space:nowrap;">
-        {% if current_user.role.value in ['admin','editor'] %}
-          <a href="/additives/{{ a.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>
-        {% endif %}
+        {% if current_user.role.value in ['admin','editor'] %}<a href="/additives/{{ a.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>{% endif %}
         {% if current_user.role.value == 'admin' %}
-          <form method="post" action="/additives/{{ a.id }}/delete" style="display:inline;"
-            onsubmit="return confirm('Delete {{ a.name }}?')">
-            <button type="submit" class="btn btn-danger">delete</button>
-          </form>
+          <form method="post" action="/additives/{{ a.id }}/delete" style="display:inline;" onsubmit="return confirm('Delete {{ a.name }}?')"><button type="submit" class="btn btn-danger">delete</button></form>
         {% endif %}
       </td>
     </tr>
@@ -62,15 +66,8 @@
 {% else %}
 <div class="empty-state">
   <div class="empty-state-title">no additives found.</div>
-  {% if filters.q or filters.type_id %}
-    <div class="empty-state-sub">try adjusting your filters.</div>
-    <a href="/additives" class="btn btn-ghost btn-sm">clear filters</a>
-  {% else %}
-    <div class="empty-state-sub">add cultures, salts, sugars, and other additives.</div>
-    {% if current_user.role.value in ['admin','editor'] %}
-      <a href="/additives/new" class="btn btn-primary">+ new additive</a>
-    {% endif %}
-  {% endif %}
+  {% if filters.q or filters.type_id %}<div class="empty-state-sub">try adjusting your filters.</div><a href="/additives" class="btn btn-ghost btn-sm">clear</a>
+  {% else %}<div class="empty-state-sub">add cultures, salts, sugars, and other additives.</div>{% if current_user.role.value in ['admin','editor'] %}<a href="/additives/new" class="btn btn-primary">+ new additive</a>{% endif %}{% endif %}
 </div>
 {% endif %}
 {% endblock %}

@@ -7,18 +7,41 @@
 
 {% block head %}
 <style>
-  .tool-type-badge {
-    font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 2px 8px; border-radius: 3px;
-    background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border);
-  }
+  .tool-type-badge { font-size:9px; letter-spacing:0.06em; text-transform:uppercase; padding:2px 8px; border-radius:3px; background:var(--blue-bg); color:var(--blue); border:1px solid var(--blue-border); }
+  .th-sort { text-decoration:none; color:inherit; display:block; }
+  .th-sort:hover { color: var(--text-2); }
+  th.active-sort { color: var(--accent); }
+  .sort-icon { font-size:10px; margin-left:3px; opacity:0.7; }
 </style>
 {% endblock %}
 
+{% block filters %}
+<form method="get" action="/tools" class="filters">
+  <input type="text" name="q" class="filter-input" placeholder="search tools..." value="{{ q }}" />
+  <input type="hidden" name="sort" value="{{ sort }}" />
+  <input type="hidden" name="dir" value="{{ dir }}" />
+  <button type="submit" class="btn-filter">search</button>
+  {% if q %}<a href="/tools?sort={{ sort }}&dir={{ dir }}" class="btn-filter">clear</a>{% endif %}
+</form>
+{% endblock %}
+
 {% block list_content %}
+{% set base = "?q=" ~ q %}
 {% if tools %}
 <table class="data-table">
-  <thead><tr><th>Name</th><th>Type</th><th>Notes</th><th>Schedule</th><th></th></tr></thead>
+  <thead>
+    <tr>
+      <th class="{{ 'active-sort' if sort == 'name' }}">
+        <a href="{{ base }}&sort=name&dir={{ 'asc' if sort == 'name' and dir == 'desc' else 'desc' }}" class="th-sort">Name <span class="sort-icon">{{ '↑' if sort == 'name' and dir == 'asc' else '↓' if sort == 'name' else '↕' }}</span></a>
+      </th>
+      <th class="{{ 'active-sort' if sort == 'type' }}">
+        <a href="{{ base }}&sort=type&dir={{ 'asc' if sort == 'type' and dir == 'desc' else 'desc' }}" class="th-sort">Type <span class="sort-icon">{{ '↑' if sort == 'type' and dir == 'asc' else '↓' if sort == 'type' else '↕' }}</span></a>
+      </th>
+      <th>Notes</th>
+      <th>Schedule</th>
+      <th></th>
+    </tr>
+  </thead>
   <tbody>
     {% for t in tools %}
     <tr>
@@ -30,14 +53,9 @@
       <td class="td-sub">{{ t.notes or '—' }}</td>
       <td><a href="/schedules/new?target_type=tool&target_id={{ t.id }}" class="btn btn-ghost btn-sm">+ schedule</a></td>
       <td style="text-align:right;white-space:nowrap;">
-        {% if current_user.role.value in ['admin','editor'] %}
-          <a href="/tools/{{ t.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>
-        {% endif %}
+        {% if current_user.role.value in ['admin','editor'] %}<a href="/tools/{{ t.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>{% endif %}
         {% if current_user.role.value == 'admin' %}
-          <form method="post" action="/tools/{{ t.id }}/delete" style="display:inline;"
-            onsubmit="return confirm('Delete {{ t.name }}?')">
-            <button type="submit" class="btn btn-danger">delete</button>
-          </form>
+          <form method="post" action="/tools/{{ t.id }}/delete" style="display:inline;" onsubmit="return confirm('Delete {{ t.name }}?')"><button type="submit" class="btn btn-danger">delete</button></form>
         {% endif %}
       </td>
     </tr>
@@ -46,11 +64,9 @@
 </table>
 {% else %}
 <div class="empty-state">
-  <div class="empty-state-title">no tools yet.</div>
-  <div class="empty-state-sub">add your pH meter, thermometer, and other equipment.</div>
-  {% if current_user.role.value in ['admin','editor'] %}
-    <a href="/tools/new" class="btn btn-primary">+ new tool</a>
-  {% endif %}
+  <div class="empty-state-title">no tools found.</div>
+  {% if q %}<div class="empty-state-sub">try a different search.</div><a href="/tools" class="btn btn-ghost btn-sm">clear</a>
+  {% else %}<div class="empty-state-sub">add your pH meter, thermometer, and other equipment.</div>{% if current_user.role.value in ['admin','editor'] %}<a href="/tools/new" class="btn btn-primary">+ new tool</a>{% endif %}{% endif %}
 </div>
 {% endif %}
 {% endblock %}

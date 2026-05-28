@@ -26,8 +26,12 @@ def additives_list(
     current_user: User = Depends(require_user),
     q: Optional[str] = None,
     type_id: Optional[str] = None,
+    sort: Optional[str] = None,
+    dir: Optional[str] = None,
 ):
-    tid = int(type_id) if type_id and type_id.strip() else None
+    tid      = int(type_id) if type_id and type_id.strip() else None
+    sort_by  = sort or "name"
+    sort_dir = dir  or "asc"
 
     query = db.query(Additive)
     if q:
@@ -35,6 +39,11 @@ def additives_list(
     if tid:
         query = query.filter(Additive.additive_type_id == tid)
 
+    if sort_by == "type":
+        query = query.outerjoin(AdditiveType, Additive.additive_type_id == AdditiveType.id)
+        query = query.order_by(AdditiveType.name.asc() if sort_dir == "asc" else AdditiveType.name.desc())
+    else:
+        query = query.order_by(Additive.name.asc() if sort_dir == "asc" else Additive.name.desc())
 
     additives = query.all()
     additive_types = db.query(AdditiveType).order_by(AdditiveType.name).all()
@@ -43,6 +52,8 @@ def additives_list(
         "additives": additives,
         "additive_types": additive_types,
         "filters": {"q": q or "", "type_id": tid},
+        "sort": sort_by,
+        "dir": sort_dir,
     })
 
 

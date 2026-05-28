@@ -5,7 +5,27 @@
 {% block page_title %}users{% endblock %}
 {% block page_sub %}{{ users | length }} account{{ 's' if users | length != 1 }}{% endblock %}
 
+{% block head %}
+<style>
+  .th-sort { text-decoration:none; color:inherit; display:block; }
+  .th-sort:hover { color: var(--text-2); }
+  th.active-sort { color: var(--accent); }
+  .sort-icon { font-size:10px; margin-left:3px; opacity:0.7; }
+</style>
+{% endblock %}
+
+{% block filters %}
+<form method="get" action="/users" class="filters">
+  <input type="text" name="q" class="filter-input" placeholder="search by username or email..." value="{{ q }}" />
+  <input type="hidden" name="sort" value="{{ sort }}" />
+  <input type="hidden" name="dir" value="{{ dir }}" />
+  <button type="submit" class="btn-filter">search</button>
+  {% if q %}<a href="/users?sort={{ sort }}&dir={{ dir }}" class="btn-filter">clear</a>{% endif %}
+</form>
+{% endblock %}
+
 {% block list_content %}
+{% set base = "?q=" ~ q %}
 {% if request.query_params.get('error') == 'self' %}
   <div class="error-banner">You cannot deactivate or delete your own account.</div>
 {% elif request.query_params.get('error') == 'has_content' %}
@@ -13,7 +33,26 @@
 {% endif %}
 
 <table class="data-table">
-  <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead>
+  <thead>
+    <tr>
+      <th class="{{ 'active-sort' if sort == 'username' }}">
+        <a href="{{ base }}&sort=username&dir={{ 'asc' if sort == 'username' and dir == 'desc' else 'desc' }}" class="th-sort">Username <span class="sort-icon">{{ '↑' if sort == 'username' and dir == 'asc' else '↓' if sort == 'username' else '↕' }}</span></a>
+      </th>
+      <th class="{{ 'active-sort' if sort == 'email' }}">
+        <a href="{{ base }}&sort=email&dir={{ 'asc' if sort == 'email' and dir == 'desc' else 'desc' }}" class="th-sort">Email <span class="sort-icon">{{ '↑' if sort == 'email' and dir == 'asc' else '↓' if sort == 'email' else '↕' }}</span></a>
+      </th>
+      <th class="{{ 'active-sort' if sort == 'role' }}">
+        <a href="{{ base }}&sort=role&dir={{ 'asc' if sort == 'role' and dir == 'desc' else 'desc' }}" class="th-sort">Role <span class="sort-icon">{{ '↑' if sort == 'role' and dir == 'asc' else '↓' if sort == 'role' else '↕' }}</span></a>
+      </th>
+      <th class="{{ 'active-sort' if sort == 'status' }}">
+        <a href="{{ base }}&sort=status&dir={{ 'asc' if sort == 'status' and dir == 'desc' else 'desc' }}" class="th-sort">Status <span class="sort-icon">{{ '↑' if sort == 'status' and dir == 'asc' else '↓' if sort == 'status' else '↕' }}</span></a>
+      </th>
+      <th class="{{ 'active-sort' if sort == 'created' }}">
+        <a href="{{ base }}&sort=created&dir={{ 'asc' if sort == 'created' and dir == 'desc' else 'desc' }}" class="th-sort">Joined <span class="sort-icon">{{ '↑' if sort == 'created' and dir == 'asc' else '↓' if sort == 'created' else '↕' }}</span></a>
+      </th>
+      <th></th>
+    </tr>
+  </thead>
   <tbody>
     {% for u in users %}
     <tr style="{{ 'opacity:0.5;' if not u.is_active }}">
@@ -23,25 +62,17 @@
       </td>
       <td class="td-sub">{{ u.email }}</td>
       <td><span class="role-badge role-{{ u.role.value }}">{{ u.role.value }}</span></td>
-      <td>
-        {% if u.is_active %}
-          <span style="font-size:10px;color:var(--green);">active</span>
-        {% else %}
-          <span style="font-size:10px;color:var(--text-3);">inactive</span>
-        {% endif %}
-      </td>
+      <td>{% if u.is_active %}<span style="font-size:10px;color:var(--green);">active</span>{% else %}<span style="font-size:10px;color:var(--text-3);">inactive</span>{% endif %}</td>
       <td class="td-sub">{{ u.created_at.strftime("%d %b %Y") }}</td>
       <td style="text-align:right;white-space:nowrap;">
         <a href="/users/{{ u.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>
         {% if u.id != current_user.id %}
           {% if u.is_active %}
-            <form method="post" action="/users/{{ u.id }}/deactivate" style="display:inline;"
-              onsubmit="return confirm('Deactivate {{ u.username }}?')">
+            <form method="post" action="/users/{{ u.id }}/deactivate" style="display:inline;" onsubmit="return confirm('Deactivate {{ u.username }}?')">
               <button type="submit" class="btn btn-ghost btn-sm" style="margin-right:4px;">deactivate</button>
             </form>
           {% endif %}
-          <form method="post" action="/users/{{ u.id }}/delete" style="display:inline;"
-            onsubmit="return confirm('Permanently delete {{ u.username }}?')">
+          <form method="post" action="/users/{{ u.id }}/delete" style="display:inline;" onsubmit="return confirm('Permanently delete {{ u.username }}?')">
             <button type="submit" class="btn btn-danger">delete</button>
           </form>
         {% endif %}

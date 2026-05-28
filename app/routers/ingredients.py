@@ -31,10 +31,15 @@ def ingredients_list(
     q: Optional[str] = None,
     tag_id: Optional[str] = None,
     cut_size_id: Optional[str] = None,
+    sort: Optional[str] = None,
+    dir: Optional[str] = None,
 ):
-    tid  = int(tag_id)       if tag_id       and tag_id.strip()       else None
-    csid = int(cut_size_id)  if cut_size_id  and cut_size_id.strip()  else None
+    tid    = int(tag_id)      if tag_id      and tag_id.strip()      else None
+    csid   = int(cut_size_id) if cut_size_id and cut_size_id.strip() else None
+    sort_by  = sort or "name"
+    sort_dir = dir  or "asc"
 
+    from app.models.lookup import CutSize
     query = (
         db.query(Ingredient)
         .options(joinedload(Ingredient.cut_size), joinedload(Ingredient.tags))
@@ -47,6 +52,11 @@ def ingredients_list(
     if csid:
         query = query.filter(Ingredient.cut_size_id == csid)
 
+    if sort_by == "cut_size":
+        query = query.outerjoin(CutSize, Ingredient.cut_size_id == CutSize.id)
+        query = query.order_by(CutSize.name.asc() if sort_dir == "asc" else CutSize.name.desc())
+    else:
+        query = query.order_by(Ingredient.name.asc() if sort_dir == "asc" else Ingredient.name.desc())
 
     ingredients = query.all()
 
@@ -57,6 +67,8 @@ def ingredients_list(
             "current_user": current_user,
             "ingredients": ingredients,
             "filters": {"q": q or "", "tag_id": tid, "cut_size_id": csid},
+            "sort": sort_by,
+            "dir": sort_dir,
             **_form_lookups(db),
         },
     )
