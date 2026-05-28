@@ -1,3 +1,4 @@
+#TODO: Add more details about the project, such as features, screenshots, and contribution guidelines.
 # ferm
 
 Professional fermentation kitchen tracker.
