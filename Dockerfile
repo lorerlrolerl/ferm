@@ -11,9 +11,10 @@ COPY pyproject.toml uv.lock ./
 # Install dependencies
 RUN uv sync --frozen --no-dev
 
-# Copy app code
+# Copy app code and webhook
 COPY app/ ./app/
+COPY webhook.py ./
 
-EXPOSE 8000
+EXPOSE 8000 9000
 
 CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
