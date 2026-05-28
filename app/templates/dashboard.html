@@ -154,20 +154,36 @@
   }
 
   /* ── Greeting ───────────────────────────────────────────────────── */
-  .greeting {
-    margin-bottom: 24px;
+  .greeting { margin-bottom: 24px; }
+  .greeting-title { font-family: Georgia, serif; font-size: 22px; color: #c8a96e; font-style: italic; margin-bottom: 4px; }
+  .greeting-sub { font-size: 11px; color: var(--text-2); letter-spacing: 0.04em; }
+
+  /* ── Mobile ─────────────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .dash {
+      grid-template-columns: 1fr;
+      gap: 12px;
+      padding: 0 12px;
+    }
+    .kpis {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .kpi { padding: 10px 12px; }
+    .kpi-value { font-size: 22px; }
+    .ferment-card { padding: 10px 12px; }
+    .ferment-name { font-size: 13px; }
+    .ferment-age { font-size: 16px; }
+    .greeting-title { font-size: 18px; }
+    .dash-side { order: -1; }
+    .side-section { margin-bottom: 16px; }
+    .alert-list { gap: 4px; }
   }
-  .greeting-title {
-    font-family: Georgia, serif;
-    font-size: 22px;
-    color: #c8a96e;
-    font-style: italic;
-    margin-bottom: 4px;
-  }
-  .greeting-sub {
-    font-size: 11px;
-    color: var(--text-2);
-    letter-spacing: 0.04em;
+
+  @media (max-width: 480px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .ferment-badges .badge { font-size: 7px; padding: 1px 5px; }
   }
 </style>
 {% endblock %}

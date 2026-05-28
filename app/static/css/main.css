@@ -259,3 +259,57 @@
 .sort-icon { font-size: 10px; margin-left: 4px; opacity: 0.5; }
 .th-sort:hover .sort-icon { opacity: 0.9; }
 .th-sort.active .sort-icon { opacity: 1; color: var(--accent); }
+
+/* ── Mobile responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* Layout */
+  .wrap, .wrap-sm, .wrap-lg { padding: 0 12px; }
+  .form-wrap { padding: 0 12px; max-width: 100%; }
+
+  /* Page header */
+  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  /* Tables — horizontal scroll */
+  .data-table { font-size: 12px; }
+  .data-table th, .data-table td { padding: 8px 8px; }
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Forms */
+  .field-row, .field-row-3 { grid-template-columns: 1fr; }
+  .form-section { padding: 14px 14px; }
+  .form-actions { flex-direction: column; }
+  .form-actions .btn { width: 100%; text-align: center; }
+
+  /* Filters */
+  .filters { flex-direction: column; align-items: stretch; }
+  .filter-input, .filter-select { width: 100%; min-width: unset; }
+
+  /* Buttons */
+  .btn { font-size: 11px; padding: 8px 14px; }
+  .btn-sm { font-size: 10px; padding: 6px 10px; }
+
+  /* Stat row */
+  .stat-row { gap: 6px; }
+  .stat-chip { flex: 1; min-width: 80px; }
+
+  /* Breadcrumb */
+  .breadcrumb { flex-wrap: wrap; font-size: 10px; }
+
+  /* Badges */
+  .badge { font-size: 8px; padding: 2px 6px; }
+
+  /* Lot code */
+  .lot-code { font-size: 11px; }
+
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens */
+  .page-title { font-size: 17px; }
+  .data-table th { font-size: 8px; }
+  .data-table td { font-size: 11px; }
+
+  /* Hide less important columns on very small screens */
+  .td-hide-xs { display: none; }
+}

@@ -144,7 +144,6 @@
 
     {% if current_user %}
     <div class="nav-links">
-      <a href="/"            {% if request.url.path == "/" %}class="active"{% endif %}>Dashboard</a>
       <a href="/ferments"    {% if request.url.path.startswith("/ferments") %}class="active"{% endif %}>Ferments</a>
       <a href="/ingredients" {% if request.url.path.startswith("/ingredients") %}class="active"{% endif %}>Ingredients</a>
       <a href="/additives"   {% if request.url.path.startswith("/additives") %}class="active"{% endif %}>Additives</a>

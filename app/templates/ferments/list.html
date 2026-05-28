@@ -77,7 +77,7 @@
           <span class="badge badge-status-{{ f.status.name | lower | replace(' ', '-') }}">{{ f.status.name }}</span>
         {% else %}—{% endif %}
       </td>
-      <td class="td-sub">{{ f.batches | length }}</td>
+      <td class="td-sub td-hide-xs">{{ f.batches | length }}</td>
       <td class="td-sub">{{ f.created_at.strftime("%d %b %Y") if f.created_at else '—' }}</td>
       <td>
         {% set age = ferment_ages.get(f.id) %}
