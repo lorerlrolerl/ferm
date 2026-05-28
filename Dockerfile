@@ -14,12 +14,6 @@ RUN uv sync --frozen --no-dev
 # Copy app code
 COPY app/ ./app/
 
-# Create data directory for the database
-RUN mkdir -p /data
-
-ENV DATABASE_URL=sqlite:////data/ferm.db
-ENV APP_NAME=fermlog
-
 EXPOSE 8000
 
 CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

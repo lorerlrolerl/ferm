@@ -6,7 +6,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - /volume1/docker/fermlog/data:/data
+      # ferm.db lives directly in the fermlog folder, not in a subfolder
+      - /volume1/docker/fermlog:/app/data
     env_file:
       - .env
     healthcheck:
