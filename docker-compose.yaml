@@ -1,0 +1,19 @@
+services:
+  fermlog:
+    build: .
+    container_name: fermlog
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persistent database — change left side to your NAS shared folder path
+      - /volume1/docker/fermlog/data:/data
+    environment:
+      - APP_NAME=fermlog
+      - SECRET_KEY=change-this-to-a-long-random-string
+      - DATABASE_URL=sqlite:////data/ferm.db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
