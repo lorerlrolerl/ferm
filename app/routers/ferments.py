@@ -39,10 +39,14 @@ def ferments_list(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
-    category_id: Optional[int] = None,
-    status_id: Optional[int] = None,
+    category_id: Optional[str] = None,
+    status_id: Optional[str] = None,
     q: Optional[str] = None,
 ):
+    # Coerce empty strings to None
+    cat_id  = int(category_id) if category_id and category_id.strip() else None
+    stat_id = int(status_id)   if status_id   and status_id.strip()   else None
+
     query = (
         db.query(Ferment)
         .filter(Ferment.archived_at == None)
@@ -52,14 +56,42 @@ def ferments_list(
             joinedload(Ferment.batches),
         )
     )
-    if category_id:
-        query = query.filter(Ferment.category_id == category_id)
-    if status_id:
-        query = query.filter(Ferment.status_id == status_id)
+    if cat_id:
+        query = query.filter(Ferment.category_id == cat_id)
+    if stat_id:
+        query = query.filter(Ferment.status_id == stat_id)
     if q:
         query = query.filter(Ferment.name.ilike(f"%{q}%"))
 
+
     ferments = query.order_by(Ferment.created_at.desc()).all()
+
+    # Compute active age for each ferment:
+    # days from created_at to last log entry, or to now if still active
+    from datetime import datetime as dt
+    from app.models.log import BatchLog
+    from sqlalchemy import func as sqlfunc
+
+    now = dt.now()
+    active_statuses = {"active", "stasis"}
+
+    ferment_ages = {}
+    for f in ferments:
+        batch_ids = [b.id for b in f.batches]
+        last_log_date = None
+        if batch_ids:
+            result = db.query(sqlfunc.max(BatchLog.logged_at))                .filter(BatchLog.batch_id.in_(batch_ids)).scalar()
+            last_log_date = result
+
+        is_active = f.status and f.status.name.lower() in active_statuses
+        end_date = now if is_active else (last_log_date or now)
+        start_date = f.created_at or now
+        age_days = (end_date - start_date).days if end_date >= start_date else 0
+        ferment_ages[f.id] = {
+            "days": age_days,
+            "last_log": last_log_date,
+            "is_active": is_active,
+        }
 
     return templates.TemplateResponse(
         request,
@@ -67,9 +99,10 @@ def ferments_list(
         {
             "current_user": current_user,
             "ferments": ferments,
+            "ferment_ages": ferment_ages,
             "categories": db.query(Category).order_by(Category.name).all(),
             "statuses": db.query(Status).order_by(Status.name).all(),
-            "filters": {"category_id": category_id, "status_id": status_id, "q": q or ""},
+            "filters": {"category_id": cat_id, "status_id": stat_id, "q": q or ""},
         },
     )
 

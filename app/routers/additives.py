@@ -25,20 +25,24 @@ def additives_list(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
     q: Optional[str] = None,
-    type_id: Optional[int] = None,
+    type_id: Optional[str] = None,
 ):
+    tid = int(type_id) if type_id and type_id.strip() else None
+
     query = db.query(Additive)
     if q:
         query = query.filter(Additive.name.ilike(f"%{q}%"))
-    if type_id:
-        query = query.filter(Additive.additive_type_id == type_id)
-    additives = query.order_by(Additive.name).all()
+    if tid:
+        query = query.filter(Additive.additive_type_id == tid)
+
+
+    additives = query.all()
     additive_types = db.query(AdditiveType).order_by(AdditiveType.name).all()
     return templates.TemplateResponse(request, "additives/list.html", {
         "current_user": current_user,
         "additives": additives,
         "additive_types": additive_types,
-        "filters": {"q": q or "", "type_id": type_id},
+        "filters": {"q": q or "", "type_id": tid},
     })
 
 

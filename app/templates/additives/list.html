@@ -10,18 +10,15 @@
   .type-badge {
     font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
     padding: 2px 8px; border-radius: 3px; display: inline-block;
+    background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border);
   }
-  .type-culture  { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border); }
-  .type-sugar    { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
-  .type-salt     { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border); }
-  .type-backslopp{ background: var(--lime-bg);   color: var(--lime);   border: 1px solid var(--lime-border); }
-  .type-other    { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
 </style>
 {% endblock %}
 
 {% block filters %}
 <form method="get" action="/additives" class="filters">
-  <input type="text" name="q" value="{{ filters.q }}" placeholder="search additives..." class="filter-input" />
+  <input type="text" name="q" class="filter-input" placeholder="search additives..."
+    value="{{ filters.q }}" />
   <select name="type_id" class="filter-select">
     <option value="">all types</option>
     {% for t in additive_types %}
@@ -29,7 +26,7 @@
     {% endfor %}
   </select>
   <button type="submit" class="btn-filter">filter</button>
-  {% if filters.q or filters.type %}
+  {% if filters.q or filters.type_id %}
     <a href="/additives" class="btn-filter">clear</a>
   {% endif %}
 </form>
@@ -38,12 +35,14 @@
 {% block list_content %}
 {% if additives %}
 <table class="data-table">
-  <thead><tr><th>Name</th><th>Type</th><th>Description</th><th></th></tr></thead>
+  <thead>
+    <tr><th>Name</th><th>Type</th><th>Description</th><th></th></tr>
+  </thead>
   <tbody>
     {% for a in additives %}
     <tr>
       <td class="td-name">{{ a.name }}</td>
-      <td><span class="type-badge type-{{ a.additive_type_name }}">{{ a.additive_type_name }}</span></td>
+      <td><span class="type-badge">{{ a.additive_type_name }}</span></td>
       <td class="td-sub">{{ a.description or '—' }}</td>
       <td style="text-align:right;white-space:nowrap;">
         {% if current_user.role.value in ['admin','editor'] %}
@@ -63,9 +62,14 @@
 {% else %}
 <div class="empty-state">
   <div class="empty-state-title">no additives found.</div>
-  <div class="empty-state-sub">add cultures, salts, sugars, and other additives.</div>
-  {% if current_user.role.value in ['admin','editor'] %}
-    <a href="/additives/new" class="btn btn-primary">+ new additive</a>
+  {% if filters.q or filters.type_id %}
+    <div class="empty-state-sub">try adjusting your filters.</div>
+    <a href="/additives" class="btn btn-ghost btn-sm">clear filters</a>
+  {% else %}
+    <div class="empty-state-sub">add cultures, salts, sugars, and other additives.</div>
+    {% if current_user.role.value in ['admin','editor'] %}
+      <a href="/additives/new" class="btn btn-primary">+ new additive</a>
+    {% endif %}
   {% endif %}
 </div>
 {% endif %}

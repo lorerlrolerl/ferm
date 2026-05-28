@@ -29,9 +29,12 @@ def ingredients_list(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
     q: Optional[str] = None,
-    tag_id: Optional[int] = None,
-    cut_size_id: Optional[int] = None,
+    tag_id: Optional[str] = None,
+    cut_size_id: Optional[str] = None,
 ):
+    tid  = int(tag_id)       if tag_id       and tag_id.strip()       else None
+    csid = int(cut_size_id)  if cut_size_id  and cut_size_id.strip()  else None
+
     query = (
         db.query(Ingredient)
         .options(joinedload(Ingredient.cut_size), joinedload(Ingredient.tags))
@@ -39,12 +42,13 @@ def ingredients_list(
     )
     if q:
         query = query.filter(Ingredient.name.ilike(f"%{q}%"))
-    if tag_id:
-        query = query.filter(Ingredient.tags.any(Tag.id == tag_id))
-    if cut_size_id:
-        query = query.filter(Ingredient.cut_size_id == cut_size_id)
+    if tid:
+        query = query.filter(Ingredient.tags.any(Tag.id == tid))
+    if csid:
+        query = query.filter(Ingredient.cut_size_id == csid)
 
-    ingredients = query.order_by(Ingredient.name).all()
+
+    ingredients = query.all()
 
     return templates.TemplateResponse(
         request,
@@ -52,7 +56,7 @@ def ingredients_list(
         {
             "current_user": current_user,
             "ingredients": ingredients,
-            "filters": {"q": q or "", "tag_id": tag_id, "cut_size_id": cut_size_id},
+            "filters": {"q": q or "", "tag_id": tid, "cut_size_id": csid},
             **_form_lookups(db),
         },
     )

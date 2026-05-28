@@ -243,3 +243,19 @@
   font-family: Georgia, serif; font-size: 18px;
   color: var(--text); display: block; margin-bottom: 1px;
 }
+
+/* ── Sortable table headers ──────────────────────────────────── */
+.data-table th { position: relative; }
+.th-sort {
+  display: block; width: 100%;
+  cursor: pointer; user-select: none;
+  white-space: nowrap; text-decoration: none !important;
+  color: var(--text-3); font-size: 9px; letter-spacing: 0.1em;
+  text-transform: uppercase; font-weight: 400;
+  padding: 0; transition: color 0.12s;
+}
+.th-sort:hover { color: var(--text-2); }
+.th-sort.active { color: var(--accent); }
+.sort-icon { font-size: 10px; margin-left: 4px; opacity: 0.5; }
+.th-sort:hover .sort-icon { opacity: 0.9; }
+.th-sort.active .sort-icon { opacity: 1; color: var(--accent); }

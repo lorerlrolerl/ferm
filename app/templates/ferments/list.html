@@ -8,14 +8,13 @@
 {% block head %}
 <style>
   .wrap { max-width: 1000px; }
-  .td-name { font-family: Georgia, serif; font-style: italic; font-size: 13px; }
-  .batch-count { font-size: 12px; color: var(--text-3); }
 </style>
 {% endblock %}
 
 {% block filters %}
 <form method="get" action="/ferments" class="filters">
-  <input type="text" name="q" class="filter-input" placeholder="search by name..." value="{{ filters.q }}" />
+  <input type="text" name="q" class="filter-input" placeholder="search by name..."
+    value="{{ filters.q }}" />
   <select name="category_id" class="filter-select">
     <option value="">all categories</option>
     {% for cat in categories %}
@@ -38,7 +37,17 @@
 {% block list_content %}
 {% if ferments %}
 <table class="data-table">
-  <thead><tr><th>Name</th><th>Category</th><th>Status</th><th>Batches</th><th>Created</th></tr></thead>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Category</th>
+      <th>Status</th>
+      <th>Batches</th>
+      <th>Created</th>
+      <th>Age</th>
+      <th></th>
+    </tr>
+  </thead>
   <tbody>
     {% for f in ferments %}
     <tr>
@@ -47,19 +56,34 @@
           <a href="/ferments/{{ f.id }}">{{ f.name }}</a>
           {% if f.is_ongoing %}<span class="badge badge-ongoing" style="margin-left:6px;">ongoing</span>{% endif %}
         </div>
-        {% if f.description %}<div class="td-sub">{{ f.description | truncate(60) }}</div>{% endif %}
       </td>
       <td>
         {% if f.category %}<span class="badge badge-cat">{{ f.category.name }}</span>
-        {% else %}<span class="td-muted">—</span>{% endif %}
+        {% else %}<span class="td-sub">—</span>{% endif %}
       </td>
       <td>
         {% if f.status %}
           <span class="badge badge-status-{{ f.status.name | lower | replace(' ', '-') }}">{{ f.status.name }}</span>
-        {% else %}<span class="td-muted">—</span>{% endif %}
+        {% else %}—{% endif %}
       </td>
-      <td class="batch-count">{{ f.batches | length }}</td>
-      <td class="td-sub">{{ f.created_at.strftime("%d %b %Y") }}</td>
+      <td class="td-sub">{{ f.batches | length }}</td>
+      <td class="td-sub">{{ f.created_at.strftime("%d %b %Y") if f.created_at else '—' }}</td>
+      <td>
+        {% set age = ferment_ages.get(f.id) %}
+        {% if age %}
+          <span style="font-size:11px; color:{{ 'var(--green)' if age.is_active else 'var(--text-3)' }}; font-family:monospace;">
+            {{ age.days }}d
+          </span>
+          {% if not age.is_active %}
+            <div style="font-size:9px; color:var(--text-3);">ended</div>
+          {% endif %}
+        {% else %}—{% endif %}
+      </td>
+      <td style="text-align:right; white-space:nowrap;">
+        {% if current_user.role.value in ['admin','editor'] %}
+          <a href="/ferments/{{ f.id }}/edit" class="btn btn-ghost btn-sm">edit</a>
+        {% endif %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>
@@ -67,12 +91,14 @@
 {% else %}
 <div class="empty-state">
   <div class="empty-state-title">no ferments found.</div>
-  <div class="empty-state-sub">
-    {% if filters.q or filters.category_id or filters.status_id %}try adjusting your filters.
-    {% else %}start tracking your first fermentation project.{% endif %}
-  </div>
-  {% if not (filters.q or filters.category_id or filters.status_id) %}
-    <a href="/ferments/new" class="btn btn-primary">+ new ferment</a>
+  {% if filters.q or filters.category_id or filters.status_id %}
+    <div class="empty-state-sub">try adjusting your filters.</div>
+    <a href="/ferments" class="btn btn-ghost btn-sm">clear filters</a>
+  {% else %}
+    <div class="empty-state-sub">start tracking your first fermentation project.</div>
+    {% if current_user.role.value in ['admin','editor'] %}
+      <a href="/ferments/new" class="btn btn-primary">+ new ferment</a>
+    {% endif %}
   {% endif %}
 </div>
 {% endif %}

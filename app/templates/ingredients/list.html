@@ -7,15 +7,22 @@
 
 {% block filters %}
 <form method="get" action="/ingredients" class="filters">
-  <input type="text" name="q" value="{{ filters.q }}" placeholder="search..." class="filter-input" />
-  <select name="tag" class="filter-select">
+  <input type="text" name="q" class="filter-input" placeholder="search ingredients..."
+    value="{{ filters.q }}" />
+  <select name="tag_id" class="filter-select">
     <option value="">all tags</option>
-    {% for tag in all_tags %}
-      <option value="{{ tag.id }}" {% if filters.tag == tag.id|string %}selected{% endif %}>{{ tag.name }}</option>
+    {% for tag in tags %}
+      <option value="{{ tag.id }}" {% if filters.tag_id == tag.id %}selected{% endif %}>{{ tag.name }}</option>
+    {% endfor %}
+  </select>
+  <select name="cut_size_id" class="filter-select">
+    <option value="">all cut sizes</option>
+    {% for cs in cut_sizes %}
+      <option value="{{ cs.id }}" {% if filters.cut_size_id == cs.id %}selected{% endif %}>{{ cs.name }}</option>
     {% endfor %}
   </select>
   <button type="submit" class="btn-filter">filter</button>
-  {% if filters.q or filters.tag %}
+  {% if filters.q or filters.tag_id or filters.cut_size_id %}
     <a href="/ingredients" class="btn-filter">clear</a>
   {% endif %}
 </form>
@@ -24,7 +31,9 @@
 {% block list_content %}
 {% if ingredients %}
 <table class="data-table">
-  <thead><tr><th>Name</th><th>Cut size</th><th>Tags</th><th></th></tr></thead>
+  <thead>
+    <tr><th>Name</th><th>Cut size</th><th>Tags</th><th></th></tr>
+  </thead>
   <tbody>
     {% for ing in ingredients %}
     <tr>
@@ -53,9 +62,14 @@
 {% else %}
 <div class="empty-state">
   <div class="empty-state-title">no ingredients found.</div>
-  <div class="empty-state-sub">add cabbage, water, tea leaves, and other ingredients.</div>
-  {% if current_user.role.value in ['admin','editor'] %}
-    <a href="/ingredients/new" class="btn btn-primary">+ new ingredient</a>
+  {% if filters.q or filters.tag_id or filters.cut_size_id %}
+    <div class="empty-state-sub">try adjusting your filters.</div>
+    <a href="/ingredients" class="btn btn-ghost btn-sm">clear filters</a>
+  {% else %}
+    <div class="empty-state-sub">add cabbage, water, tea leaves, and other ingredients.</div>
+    {% if current_user.role.value in ['admin','editor'] %}
+      <a href="/ingredients/new" class="btn btn-primary">+ new ingredient</a>
+    {% endif %}
   {% endif %}
 </div>
 {% endif %}
