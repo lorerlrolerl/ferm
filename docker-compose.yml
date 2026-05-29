@@ -1,3 +1,5 @@
+name: fermlog
+
 services:
   fermlog:
     build: .
