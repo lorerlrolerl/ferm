@@ -17,6 +17,9 @@ COPY pyproject.toml uv.lock ./
 # Install dependencies
 RUN uv sync --frozen --no-dev
 
+# Trust mounted volumes for git
+RUN git config --global --add safe.directory /repo
+
 # Copy app code and webhook
 COPY app/ ./app/
 COPY webhook.py ./
