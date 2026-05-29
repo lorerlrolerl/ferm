@@ -16,20 +16,3 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-
-  webhook:
-    build: .
-    container_name: fermlog-webhook
-    restart: unless-stopped
-    ports:
-      - "0.0.0.0:9000:9000"
-    volumes:
-      - /volume1/docker/fermlog:/repo
-      - /var/run/docker.sock:/var/run/docker.sock
-    env_file:
-      - .env
-    environment:
-      - DEPLOY_DIR=/repo
-      - DEPLOY_BRANCH=main
-      - WEBHOOK_PORT=9000
-    command: ["uv", "run", "python", "webhook.py"]
