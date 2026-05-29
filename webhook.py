@@ -40,12 +40,12 @@ def run_deploy():
     log.info("Starting deploy...")
     commands = [
         ["git", "-C", DEPLOY_DIR, "pull", "origin", DEPLOY_BRANCH],
-        ["docker", "compose", "-f", f"{DEPLOY_DIR}/docker-compose.yml", "up", "-d", "--build"],
+        ["docker", "compose", "up", "-d", "--build"],
         ["docker", "image", "prune", "-f"],
     ]
     for cmd in commands:
         log.info(f"Running: {' '.join(cmd)}")
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=DEPLOY_DIR)
         if result.stdout: log.info(result.stdout)
         if result.stderr: log.info(result.stderr)
         if result.returncode != 0:
