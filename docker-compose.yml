@@ -22,13 +22,13 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - /volume1/docker/fermlog:/app/data
+      - /volume1/docker/fermlog:/repo          # mount the project folder
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker
     env_file:
       - .env
     environment:
-      - DEPLOY_DIR=/volume1/docker/fermlog
+      - DEPLOY_DIR=/repo
       - DEPLOY_BRANCH=main
       - WEBHOOK_PORT=9000
     command: ["uv", "run", "python", "webhook.py"]
