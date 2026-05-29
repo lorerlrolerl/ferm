@@ -29,7 +29,7 @@ def dashboard(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = datetime.now()  # local time — matches naive datetimes stored in db
 
     # ── Status id lookups ──────────────────────────────────────────────────
     active_id = _get_status_id(db, "active")
@@ -113,12 +113,14 @@ def dashboard(
     ferment_data = ferment_data + stasis_data
 
     # ── Schedules due ──────────────────────────────────────────────────────
+    now_str      = now.strftime("%Y-%m-%d %H:%M:%S")
+    end_of_today = now.strftime("%Y-%m-%d") + " 23:59:59"
     due_schedules = (
         db.query(Schedule)
         .filter(
             Schedule.is_active == True,
             Schedule.next_due_at != None,
-            Schedule.next_due_at <= now,
+            Schedule.next_due_at <= end_of_today,
         )
         .order_by(Schedule.next_due_at.asc())
         .limit(10)
@@ -141,10 +143,48 @@ def dashboard(
         return f"{s.target_type} #{s.target_id}"
 
     due_enriched = [
-        {"schedule": s, "target_name": _target_name(s),
-         "days_overdue": (now - s.next_due_at).days}
+        {
+            "kind": "schedule",
+            "schedule": s,
+            "target_name": _target_name(s),
+            "days_overdue": (now - s.next_due_at).days,  # negative = due later today
+            "label": s.name,
+            "url": f"/schedules/{s.id}",
+        }
         for s in due_schedules
     ]
+
+    # ── Batches past target ready date and still active ───────────────────
+    active_status_ids = [sid for sid in [active_id, stasis_id] if sid is not None]
+    overdue_batches = (
+        db.query(Batch)
+        .join(Ferment, Batch.ferment_id == Ferment.id)
+        .filter(
+            Batch.target_ready_at != None,
+            Batch.target_ready_at <= end_of_today,
+            Batch.status_id.in_(active_status_ids),
+            Ferment.archived_at == None,
+        )
+        .order_by(Batch.target_ready_at.asc())
+        .limit(10)
+        .all()
+    )
+
+    for b in overdue_batches:
+        days_overdue = (now - b.target_ready_at).days
+        due_enriched.append({
+            "kind": "batch",
+            "schedule": None,
+            "batch": b,
+            "ferment_name": b.ferment.name if b.ferment else "—",
+            "target_name": b.lot_code or f"Batch #{b.id}",
+            "days_overdue": days_overdue,
+            "label": f"Target ready: {b.lot_code or b.ferment.name}",
+            "url": f"/ferments/{b.ferment_id}/batches/{b.id}",
+        })
+
+    # Sort all alerts: most overdue first
+    due_enriched.sort(key=lambda x: -x["days_overdue"])
 
     hour = now.hour
     if hour < 12:
