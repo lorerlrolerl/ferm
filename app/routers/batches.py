@@ -192,8 +192,10 @@ def batch_detail(
         .order_by(Ingredient.name)
         .all()
     )
+    from sqlalchemy.orm import joinedload as jload
     available_additives = (
         db.query(Additive)
+        .options(jload(Additive.type_obj))
         .filter(~Additive.id.in_(used_additive_ids))
         .order_by(Additive.name)
         .all()

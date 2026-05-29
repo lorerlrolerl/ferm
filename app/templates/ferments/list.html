@@ -88,7 +88,10 @@
       </td>
       <td style="text-align:right; white-space:nowrap;">
         {% if current_user.role.value in ['admin','editor'] %}
-          <a href="/ferments/{{ f.id }}/edit" class="btn btn-ghost btn-sm">edit</a>
+          <a href="/ferments/{{ f.id }}/edit" class="btn btn-ghost btn-sm" style="margin-right:4px;">edit</a>
+        {% endif %}
+        {% if current_user.role.value == 'admin' %}
+          <a href="/ferments/{{ f.id }}/delete" class="btn btn-danger" style="font-size:9px;padding:4px 10px;">delete</a>
         {% endif %}
       </td>
     </tr>

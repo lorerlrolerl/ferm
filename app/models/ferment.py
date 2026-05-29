@@ -28,8 +28,8 @@ class Ferment(Base):
     category: Mapped["Category"] = relationship(back_populates="ferments")
     status: Mapped["Status"] = relationship()
     created_by_user: Mapped["User"] = relationship(back_populates="created_ferments")
-    batches: Mapped[list["Batch"]] = relationship(back_populates="ferment", order_by="Batch.started_at")
-    schedules: Mapped[list["Schedule"]] = relationship(
+    batches: Mapped[list["Batch"]] = relationship(back_populates="ferment", order_by="Batch.started_at", cascade="all, delete-orphan")
+    schedules: Mapped[list["Schedule"]] = relationship(cascade="all, delete-orphan",
         primaryjoin="and_(Schedule.target_id == foreign(Ferment.id), Schedule.target_type == 'ferment')",
         viewonly=True,
     )
@@ -66,9 +66,9 @@ class Batch(Base):
     status: Mapped["Status"] = relationship()
     created_by_user: Mapped["User"] = relationship(back_populates="created_batches")
     parent_batch: Mapped["Batch | None"] = relationship(remote_side="Batch.id", foreign_keys=[parent_batch_id])
-    child_batches: Mapped[list["Batch"]] = relationship(foreign_keys=[parent_batch_id], overlaps="parent_batch")
+    child_batches: Mapped[list["Batch"]] = relationship(foreign_keys=[parent_batch_id], overlaps="parent_batch", cascade="all, delete-orphan")
     logs: Mapped[list["BatchLog"]] = relationship(back_populates="batch", order_by="BatchLog.logged_at.desc()", cascade="all, delete-orphan")
-    containers: Mapped[list["Container"]] = relationship(back_populates="batch")
+    containers: Mapped[list["Container"]] = relationship(back_populates="batch", cascade="all, delete-orphan")
     ingredients: Mapped[list["BatchIngredient"]] = relationship(back_populates="batch", cascade="all, delete-orphan")
     additives: Mapped[list["BatchAdditive"]] = relationship(back_populates="batch", cascade="all, delete-orphan")
     observations: Mapped[list["Observation"]] = relationship(

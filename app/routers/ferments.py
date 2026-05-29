@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session, joinedload
 
-from app.auth import require_user, require_editor
+from app.auth import require_user, require_editor, require_admin
 from app.database import get_db
 from app.lot_code import generate_lot_code, next_batch_number
 from app.models.ferment import Batch, Ferment
@@ -340,3 +340,69 @@ def ferments_update(
     db.commit()
 
     return RedirectResponse(f"/ferments/{ferment_id}", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.get("/{ferment_id}/delete", response_class=HTMLResponse)
+def ferment_delete_confirm(
+    ferment_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    ferment = db.query(Ferment).filter_by(id=ferment_id).first()
+    if not ferment:
+        return RedirectResponse("/ferments", status_code=status.HTTP_302_FOUND)
+    confirm_key = f"{ferment.id}-{ferment.name}"
+    return templates.TemplateResponse(request, "ferments/delete_confirm.html", {
+        "current_user": current_user,
+        "ferment": ferment,
+        "confirm_key": confirm_key,
+        "error": None,
+    })
+
+
+@router.post("/{ferment_id}/delete")
+def ferment_delete(
+    ferment_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+    confirm_name: str = Form(...),
+):
+    ferment = db.query(Ferment).filter_by(id=ferment_id).first()
+    if not ferment:
+        return RedirectResponse("/ferments", status_code=status.HTTP_302_FOUND)
+
+    confirm_key = f"{ferment.id}-{ferment.name}"
+    if confirm_name.strip() != confirm_key:
+        return templates.TemplateResponse(request, "ferments/delete_confirm.html", {
+            "current_user": current_user,
+            "ferment": ferment,
+            "confirm_key": confirm_key,
+            "error": f"Does not match. Type exactly: {confirm_key}",
+        }, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    from app.models.ferment import Batch, BatchIngredient, BatchAdditive, Container
+    from app.models.log import BatchLog, log_smells, log_visuals
+    from app.models.schedule import Schedule
+
+    # Delete all related records manually to avoid FK constraint errors
+    for batch in ferment.batches:
+        # Delete log entries and their descriptors
+        for log in db.query(BatchLog).filter_by(batch_id=batch.id).all():
+            db.execute(log_smells.delete().where(log_smells.c.log_id == log.id))
+            db.execute(log_visuals.delete().where(log_visuals.c.log_id == log.id))
+            db.delete(log)
+        # Delete batch ingredients and additives
+        db.query(BatchIngredient).filter_by(batch_id=batch.id).delete()
+        db.query(BatchAdditive).filter_by(batch_id=batch.id).delete()
+        # Delete containers
+        db.query(Container).filter_by(batch_id=batch.id).delete()
+        db.delete(batch)
+
+    # Delete related schedules
+    db.query(Schedule).filter_by(target_type="ferment", target_id=ferment.id).delete()
+
+    db.delete(ferment)
+    db.commit()
+    return RedirectResponse("/ferments", status_code=status.HTTP_303_SEE_OTHER)

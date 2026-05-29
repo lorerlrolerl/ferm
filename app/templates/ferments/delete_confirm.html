@@ -1,0 +1,64 @@
+{% extends "base_form.html" %}
+{% block title %}delete {{ ferment.name }} — fermlog{% endblock %}
+{% block form_title %}delete ferment{% endblock %}
+
+{% block head %}
+<style>
+  .danger-box {
+    background: var(--red-bg); border: 1px solid var(--red-border);
+    border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 20px;
+  }
+  .danger-box-title { font-size: 13px; color: var(--red); font-weight: 600; margin-bottom: 6px; }
+  .danger-box-text  { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+  .confirm-key {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius);
+    padding: 3px 10px;
+    display: inline-block;
+    margin-top: 6px;
+  }
+</style>
+{% endblock %}
+
+{% block form_content %}
+<div class="breadcrumb">
+  <a href="/ferments">ferments</a><span class="breadcrumb-sep">/</span>
+  <a href="/ferments/{{ ferment.id }}">{{ ferment.name }}</a><span class="breadcrumb-sep">/</span>
+  <span>delete</span>
+</div>
+
+<div class="danger-box">
+  <div class="danger-box-title">⚠ This action cannot be undone</div>
+  <div class="danger-box-text">
+    Deleting <strong>{{ ferment.name }}</strong> will permanently remove all associated
+    batches, log entries, ingredients, additives, and containers.
+  </div>
+</div>
+
+{% if error %}
+  <div class="error-banner">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="/ferments/{{ ferment.id }}/delete">
+  <div class="form-section">
+    <div class="form-section-title">Confirm deletion</div>
+    <div class="field">
+      <label>Type the following to confirm</label>
+      <div class="confirm-key">{{ confirm_key }}</div>
+      <input type="text" name="confirm_name" required autofocus
+        placeholder="type here..."
+        style="font-family: monospace; margin-top: 10px;" />
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-danger" style="font-size:11px; padding:8px 20px;">
+      permanently delete
+    </button>
+    <a href="/ferments/{{ ferment.id }}" class="btn btn-ghost">cancel</a>
+  </div>
+</form>
+{% endblock %}

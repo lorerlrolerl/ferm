@@ -52,6 +52,9 @@
   <a href="/ferments/{{ ferment.id }}/batches/new" class="btn btn-primary">+ new batch</a>
   <a href="/ferments/{{ ferment.id }}/edit" class="btn btn-ghost">edit</a>
 {% endif %}
+{% if current_user.role.value == 'admin' %}
+  <a href="/ferments/{{ ferment.id }}/delete" class="btn btn-danger" style="font-size:9px;padding:5px 12px;">delete</a>
+{% endif %}
 <a href="/ferments" class="btn btn-ghost">← all</a>
 {% endblock %}
 
