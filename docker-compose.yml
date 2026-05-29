@@ -4,7 +4,7 @@ services:
     container_name: fermlog
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "0.0.0.0:8000:8000"
     volumes:
       - /volume1/docker/fermlog:/app/data
     env_file:
@@ -20,11 +20,10 @@ services:
     container_name: fermlog-webhook
     restart: unless-stopped
     ports:
-      - "9000:9000"
+      - "0.0.0.0:9000:9000"
     volumes:
-      - /volume1/docker/fermlog:/repo          # mount the project folder
+      - /volume1/docker/fermlog:/repo
       - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin/docker:/usr/bin/docker
     env_file:
       - .env
     environment:
