@@ -40,7 +40,7 @@ def run_deploy():
     log.info("Starting deploy...")
     commands = [
         ["git", "-C", DEPLOY_DIR, "pull", "origin", DEPLOY_BRANCH],
-        ["docker", "compose", "up", "-d", "--build"],
+        ["docker", "compose", "-p", "fermlog", "up", "-d", "--build"],
         ["docker", "image", "prune", "-f"],
     ]
     for cmd in commands:
